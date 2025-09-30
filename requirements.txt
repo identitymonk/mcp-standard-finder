@@ -1,0 +1,15 @@
+# Optional dependencies - the server works without these
+# These were used in the previous FastMCP version but are no longer required
+
+# fastmcp>=0.2.0        # No longer used - standard_finder.py implements MCP directly
+# aiohttp>=3.9.0        # No longer used - using urllib.request instead
+# beautifulsoup4>=4.12.0 # No longer used - using simple HTML parsing
+# lxml>=4.9.0           # No longer used - using simple text parsing
+
+# The server now uses only Python standard library modules:
+# - urllib.request for HTTP requests
+# - json for JSON parsing
+# - re for regular expressions
+# - html.parser for basic HTML parsing
+# - logging for comprehensive logging
+# - http.server for HTTP transport mode
