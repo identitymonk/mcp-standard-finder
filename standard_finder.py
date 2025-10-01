@@ -42,6 +42,219 @@ class SimpleMCPServer:
             return func
         return decorator
     
+    def _get_tool_schema(self, tool_name: str) -> Dict[str, Any]:
+        """Get proper input schema for a tool - MCP Inspector compatible format"""
+        schemas = {
+            "get_rfc": {
+                "GetRfcInput": {
+                    "type": "object",
+                    "properties": {
+                        "number": {
+                            "type": "string",
+                            "description": "RFC number (e.g., '2616', '7540')"
+                        },
+                        "format": {
+                            "type": "string",
+                            "enum": ["full", "metadata", "sections"],
+                            "default": "full",
+                            "description": "Output format: full document, metadata only, or sections only"
+                        }
+                    },
+                    "required": ["number"],
+                    "description": "Parameters for fetching an RFC document"
+                }
+            },
+            "search_rfcs": {
+                "SearchRfcsInput": {
+                    "type": "object",
+                    "properties": {
+                        "query": {
+                            "type": "string",
+                            "description": "Search query or keyword to find RFCs"
+                        },
+                        "limit": {
+                            "type": "integer",
+                            "default": 10,
+                            "minimum": 1,
+                            "maximum": 50,
+                            "description": "Maximum number of results to return"
+                        }
+                    },
+                    "required": ["query"],
+                    "description": "Parameters for searching RFC documents"
+                }
+            },
+            "get_rfc_section": {
+                "GetRfcSectionInput": {
+                    "type": "object",
+                    "properties": {
+                        "number": {
+                            "type": "string",
+                            "description": "RFC number (e.g., '2616')"
+                        },
+                        "section": {
+                            "type": "string",
+                            "description": "Section title or identifier to retrieve"
+                        }
+                    },
+                    "required": ["number", "section"],
+                    "description": "Parameters for fetching a specific RFC section"
+                }
+            },
+            "get_internet_draft": {
+                "GetInternetDraftInput": {
+                    "type": "object",
+                    "properties": {
+                        "name": {
+                            "type": "string",
+                            "description": "Internet Draft name (e.g., 'draft-ietf-httpbis-http2' or 'draft-ietf-httpbis-http2-17')"
+                        },
+                        "format": {
+                            "type": "string",
+                            "enum": ["full", "metadata", "sections"],
+                            "default": "full",
+                            "description": "Output format: full document, metadata only, or sections only"
+                        }
+                    },
+                    "required": ["name"],
+                    "description": "Parameters for fetching an Internet Draft document"
+                }
+            },
+            "search_internet_drafts": {
+                "SearchInternetDraftsInput": {
+                    "type": "object",
+                    "properties": {
+                        "query": {
+                            "type": "string",
+                            "description": "Search query or keyword to find Internet Drafts"
+                        },
+                        "limit": {
+                            "type": "integer",
+                            "default": 10,
+                            "minimum": 1,
+                            "maximum": 50,
+                            "description": "Maximum number of results to return"
+                        }
+                    },
+                    "required": ["query"],
+                    "description": "Parameters for searching Internet Draft documents"
+                }
+            },
+            "get_internet_draft_section": {
+                "GetInternetDraftSectionInput": {
+                    "type": "object",
+                    "properties": {
+                        "name": {
+                            "type": "string",
+                            "description": "Internet Draft name"
+                        },
+                        "section": {
+                            "type": "string",
+                            "description": "Section title or identifier to retrieve"
+                        }
+                    },
+                    "required": ["name", "section"],
+                    "description": "Parameters for fetching a specific Internet Draft section"
+                }
+            },
+            "get_openid_spec": {
+                "GetOpenIdSpecInput": {
+                    "type": "object",
+                    "properties": {
+                        "name": {
+                            "type": "string",
+                            "description": "OpenID specification name (e.g., 'openid-connect-core', 'oauth-2.0-multiple-response-types')"
+                        },
+                        "format": {
+                            "type": "string",
+                            "enum": ["full", "metadata", "sections"],
+                            "default": "full",
+                            "description": "Output format: full document, metadata only, or sections only"
+                        }
+                    },
+                    "required": ["name"],
+                    "description": "Parameters for fetching an OpenID Foundation specification"
+                }
+            },
+            "search_openid_specs": {
+                "SearchOpenIdSpecsInput": {
+                    "type": "object",
+                    "properties": {
+                        "query": {
+                            "type": "string",
+                            "description": "Search query or keyword to find OpenID specifications"
+                        },
+                        "limit": {
+                            "type": "integer",
+                            "default": 10,
+                            "minimum": 1,
+                            "maximum": 20,
+                            "description": "Maximum number of results to return"
+                        }
+                    },
+                    "required": ["query"],
+                    "description": "Parameters for searching OpenID Foundation specifications"
+                }
+            },
+            "get_openid_spec_section": {
+                "GetOpenIdSpecSectionInput": {
+                    "type": "object",
+                    "properties": {
+                        "name": {
+                            "type": "string",
+                            "description": "OpenID specification name"
+                        },
+                        "section": {
+                            "type": "string",
+                            "description": "Section title or identifier to retrieve"
+                        }
+                    },
+                    "required": ["name", "section"],
+                    "description": "Parameters for fetching a specific OpenID specification section"
+                }
+            },
+            "get_working_group_documents": {
+                "GetWorkingGroupDocumentsInput": {
+                    "type": "object",
+                    "properties": {
+                        "working_group": {
+                            "type": "string",
+                            "description": "IETF working group name (e.g., 'httpbis', 'oauth', 'tls')"
+                        },
+                        "include_rfcs": {
+                            "type": "boolean",
+                            "default": True,
+                            "description": "Include RFCs published by the working group"
+                        },
+                        "include_drafts": {
+                            "type": "boolean",
+                            "default": True,
+                            "description": "Include active Internet Drafts from the working group"
+                        },
+                        "limit": {
+                            "type": "integer",
+                            "default": 50,
+                            "minimum": 1,
+                            "maximum": 100,
+                            "description": "Maximum number of documents to return"
+                        }
+                    },
+                    "required": ["working_group"],
+                    "description": "Parameters for fetching working group documents"
+                }
+            }
+        }
+        
+        # Return the schema for the tool, or a default empty schema
+        return schemas.get(tool_name, {
+            "DefaultInput": {
+                "type": "object",
+                "properties": {},
+                "required": [],
+                "description": "Default input parameters"
+            }
+        })
+    
     async def send_progress_notification(self, request_id: str, progress: int, message: str):
         """Send progress notification to client"""
         notification = {
@@ -66,12 +279,83 @@ class SimpleMCPServer:
         params = request.get("params", {})
         request_id = request.get("id")
         
-        self.logger.info(f"Handling request: {method} (ID: {request_id})")
+        # Enhanced logging for initialize requests
+        if method == "initialize":
+            self.logger.info(f"🚀 INITIALIZE REQUEST RECEIVED")
+            self.logger.info(f"Handling request: {method} (ID: {request_id})")
+            self.logger.info(f"Request timestamp: {datetime.now().isoformat()}")
+            self.logger.info(f"Request size: {len(json.dumps(request))} bytes")
+        else:
+            self.logger.info(f"Handling request: {method} (ID: {request_id})")
+        
         self.logger.debug(f"Request params: {params}")
+        self.logger.debug(f"Full request: {request}")
+        
+        # Check if this is a notification (no ID) vs a request (has ID)
+        is_notification = request_id is None
+        
+        if is_notification:
+            self.logger.debug(f"Processing as notification (no response expected)")
+        else:
+            self.logger.debug(f"Processing as request (response required with ID: {request_id})")
+            
+        # Log request validation for initialize
+        if method == "initialize":
+            self.logger.info("Validating initialize request format:")
+            self.logger.info(f"  jsonrpc field: {request.get('jsonrpc', 'MISSING')}")
+            self.logger.info(f"  method field: {request.get('method', 'MISSING')}")
+            self.logger.info(f"  id field: {request.get('id', 'MISSING')} (type: {type(request.get('id')).__name__})")
+            self.logger.info(f"  params field: {'present' if 'params' in request else 'MISSING'}")
+            
+            # Validate JSON-RPC 2.0 compliance
+            if request.get("jsonrpc") != "2.0":
+                self.logger.warning(f"⚠️  Non-standard jsonrpc version: {request.get('jsonrpc')}")
+            else:
+                self.logger.info("✅ JSON-RPC 2.0 version confirmed")
         
         try:
             if method == "initialize":
-                return {
+                self.logger.info("=" * 60)
+                self.logger.info("INITIALIZE REQUEST PROCESSING")
+                self.logger.info("=" * 60)
+                
+                # Log the full request details
+                self.logger.info(f"Initialize request received:")
+                self.logger.info(f"  Request ID: {request_id} (type: {type(request_id).__name__})")
+                self.logger.info(f"  Request method: {method}")
+                self.logger.info(f"  Request params: {json.dumps(params, indent=2)}")
+                self.logger.info(f"  Full request: {json.dumps(request, indent=2)}")
+                
+                # Initialize must have an ID (not a notification)
+                if is_notification:
+                    self.logger.error("Initialize request missing ID - this is invalid")
+                    self.logger.error("MCP initialize requests MUST have an ID field")
+                    return None  # Can't respond to a malformed initialize
+                
+                # Validate request structure
+                self.logger.info("Validating initialize request structure:")
+                
+                # Check required params
+                required_params = ["protocolVersion", "capabilities", "clientInfo"]
+                for param in required_params:
+                    if param in params:
+                        self.logger.info(f"  ✅ {param}: {type(params[param]).__name__}")
+                        if param == "protocolVersion":
+                            self.logger.info(f"     Protocol version: {params[param]}")
+                        elif param == "clientInfo":
+                            client_info = params[param]
+                            self.logger.info(f"     Client name: {client_info.get('name', 'unknown')}")
+                            self.logger.info(f"     Client version: {client_info.get('version', 'unknown')}")
+                        elif param == "capabilities":
+                            caps = params[param]
+                            self.logger.info(f"     Client capabilities: {list(caps.keys()) if isinstance(caps, dict) else 'invalid'}")
+                    else:
+                        self.logger.warning(f"  ⚠️  Missing parameter: {param}")
+                
+                # Build response
+                self.logger.info("Building initialize response:")
+                
+                response = {
                     "jsonrpc": "2.0",
                     "id": request_id,
                     "result": {
@@ -86,40 +370,135 @@ class SimpleMCPServer:
                         }
                     }
                 }
+                
+                # Log response construction details
+                self.logger.info(f"Response structure built:")
+                self.logger.info(f"  Response ID: {response['id']} (type: {type(response['id']).__name__})")
+                self.logger.info(f"  Protocol version: {response['result']['protocolVersion']}")
+                self.logger.info(f"  Server name: {response['result']['serverInfo']['name']}")
+                self.logger.info(f"  Server version: {response['result']['serverInfo']['version']}")
+                self.logger.info(f"  Capabilities: {response['result']['capabilities']}")
+                
+                # Safety check: never send null ID
+                if response["id"] is None:
+                    self.logger.error(f"Response ID is None for {method} - this should not happen!")
+                    self.logger.error(f"Original request ID was: {request_id} (type: {type(request_id).__name__})")
+                    del response["id"]  # Remove the field entirely
+                
+                # Log the complete response
+                self.logger.info("Complete initialize response:")
+                self.logger.info(json.dumps(response, indent=2))
+                
+                # Log serialized response (as it will be sent over STDIO)
+                try:
+                    serialized_response = json.dumps(response, ensure_ascii=False, separators=(',', ':'))
+                    self.logger.info(f"Serialized response ({len(serialized_response)} bytes):")
+                    self.logger.info(serialized_response)
+                    
+                    # Validate serialized response can be parsed back
+                    try:
+                        parsed_back = json.loads(serialized_response)
+                        self.logger.info("✅ Response JSON serialization/parsing validation successful")
+                    except json.JSONDecodeError as json_err:
+                        self.logger.error(f"❌ Response JSON validation failed: {json_err}")
+                        
+                except Exception as serialize_err:
+                    self.logger.error(f"❌ Response serialization failed: {serialize_err}")
+                
+                # Log ID consistency check
+                if request.get("id") == response.get("id"):
+                    self.logger.info(f"✅ ID consistency verified: {request.get('id')} == {response.get('id')}")
+                else:
+                    self.logger.error(f"❌ ID mismatch: request={request.get('id')} != response={response.get('id')}")
+                
+                self.logger.info("=" * 60)
+                self.logger.info("INITIALIZE REQUEST PROCESSING COMPLETE")
+                self.logger.info("=" * 60)
+                
+                return response
             
             elif method == "tools/list":
+                # tools/list must have an ID (not a notification)
+                if is_notification:
+                    self.logger.error("tools/list request missing ID - this is invalid")
+                    return None
+                
                 tools_list = []
                 for tool_name, tool_func in self.tools.items():
                     # Extract docstring and create tool definition
                     doc = tool_func.__doc__ or f"{tool_name} tool"
-                    tools_list.append({
-                        "name": tool_name,
-                        "description": doc.split('\n')[0].strip(),
-                        "inputSchema": {
+                    
+                    # Create proper input schema based on tool name
+                    schema_wrapper = self._get_tool_schema(tool_name)
+                    
+                    # Extract the actual schema from the wrapper (MCP Inspector compatible)
+                    if schema_wrapper and isinstance(schema_wrapper, dict):
+                        # Get the first (and should be only) key from the wrapper
+                        input_schema_key = next(iter(schema_wrapper.keys()))
+                        input_schema = schema_wrapper[input_schema_key]
+                    else:
+                        # Fallback to empty schema
+                        input_schema = {
                             "type": "object",
                             "properties": {},
                             "required": []
                         }
+                    
+                    tools_list.append({
+                        "name": tool_name,
+                        "description": doc.split('\n')[0].strip(),
+                        "inputSchema": input_schema
                     })
                 
-                return {
+                response = {
                     "jsonrpc": "2.0",
                     "id": request_id,
                     "result": {"tools": tools_list}
                 }
+                
+                # Safety check: never send null ID
+                if response["id"] is None:
+                    self.logger.error(f"Response ID is None for {method} - this should not happen!")
+                    del response["id"]
+                
+                return response
             
             elif method == "tools/call":
+                # tools/call must have an ID (not a notification)
+                if is_notification:
+                    self.logger.error("tools/call request missing ID - this is invalid")
+                    return None
+                
                 tool_name = params.get("name")
                 arguments = params.get("arguments", {})
                 
                 if tool_name in self.tools:
+                    # Handle MCP Inspector wrapped parameters format
+                    # Check if arguments contain a single key that matches our expected input wrapper
+                    schema_wrapper = self._get_tool_schema(tool_name)
+                    if schema_wrapper and isinstance(schema_wrapper, dict) and len(arguments) == 1:
+                        # Get the expected wrapper key name
+                        expected_wrapper_key = next(iter(schema_wrapper.keys()))
+                        actual_key = next(iter(arguments.keys()))
+                        
+                        # If the argument key matches our wrapper key, unwrap it
+                        if actual_key == expected_wrapper_key and isinstance(arguments[actual_key], dict):
+                            self.logger.debug(f"Unwrapping MCP Inspector format parameters for {tool_name}")
+                            arguments = arguments[actual_key]
+                        # Otherwise, check if it's the old direct format by looking for expected parameters
+                        elif any(key in arguments for key in ['number', 'name', 'query', 'working_group']):
+                            self.logger.debug(f"Using direct parameter format for {tool_name}")
+                            # Keep arguments as-is for backward compatibility
+                        else:
+                            self.logger.debug(f"Unknown parameter format for {tool_name}, trying as-is")
+                    
                     # Pass request_id to tools that support progress notifications
                     if tool_name in ['get_internet_draft', 'get_rfc', 'get_openid_spec', 'search_openid_specs']:
                         arguments['_request_id'] = request_id
                         arguments['_progress_callback'] = self.send_progress_notification
                     
                     result = await self.tools[tool_name](**arguments)
-                    return {
+                    response = {
                         "jsonrpc": "2.0",
                         "id": request_id,
                         "result": {
@@ -129,59 +508,474 @@ class SimpleMCPServer:
                             }]
                         }
                     }
+                    
+                    # Safety check: never send null ID
+                    if response["id"] is None:
+                        self.logger.error(f"Response ID is None for {method}/{tool_name} - this should not happen!")
+                        del response["id"]
+                    
+                    return response
                 else:
                     raise Exception(f"Unknown tool: {tool_name}")
+            
+            elif method == "notifications/initialized":
+                # This is a notification sent by the client after receiving initialize response
+                # It should not have an ID (it's a notification, not a request)
+                self.logger.info("📢 NOTIFICATIONS/INITIALIZED RECEIVED")
+                self.logger.info("Client has confirmed initialization is complete")
+                
+                if not is_notification:
+                    self.logger.warning(f"notifications/initialized should be a notification (no ID), but received ID: {request_id}")
+                
+                # Log the notification details
+                self.logger.info(f"Initialization notification params: {params}")
+                
+                # Notifications don't require a response
+                self.logger.info("✅ Client initialization confirmed - server is ready for requests")
+                return None  # No response for notifications
+            
+            elif method.startswith("notifications/"):
+                # Handle other MCP notifications
+                self.logger.info(f"📢 NOTIFICATION RECEIVED: {method}")
+                self.logger.info(f"Notification params: {params}")
+                
+                if not is_notification:
+                    self.logger.warning(f"Notification {method} should not have an ID, but received ID: {request_id}")
+                
+                # Common MCP notifications that we can acknowledge but don't need to act on
+                known_notifications = [
+                    "notifications/cancelled",
+                    "notifications/progress",
+                    "notifications/message",
+                    "notifications/resources/updated",
+                    "notifications/tools/updated"
+                ]
+                
+                if method in known_notifications:
+                    self.logger.info(f"✅ Acknowledged known notification: {method}")
+                else:
+                    self.logger.info(f"ℹ️  Received unknown notification: {method} (ignoring)")
+                
+                return None  # No response for notifications
             
             else:
                 raise Exception(f"Unknown method: {method}")
         
         except Exception as e:
-            self.logger.error(f"Error handling request {method}: {str(e)}", exc_info=True)
-            return {
+            # Enhanced error logging for initialize requests
+            if method == "initialize":
+                self.logger.error("❌ INITIALIZE REQUEST FAILED")
+                self.logger.error("=" * 50)
+                self.logger.error(f"Initialize request processing failed: {str(e)}")
+                self.logger.error(f"Request ID: {request_id}")
+                self.logger.error(f"Request params: {params}")
+                self.logger.error(f"Full request: {request}")
+                self.logger.error("Stack trace:", exc_info=True)
+                self.logger.error("=" * 50)
+            else:
+                self.logger.error(f"Error handling request {method}: {str(e)}", exc_info=True)
+            
+            # Create error response with proper ID handling
+            error_response = {
                 "jsonrpc": "2.0",
-                "id": request_id,
                 "error": {
                     "code": -32603,
                     "message": str(e)
                 }
             }
+            
+            # Only add ID if the original request had one and it's not None
+            if not is_notification and request_id is not None:
+                error_response["id"] = request_id
+                self.logger.debug(f"Adding ID {request_id} to error response")
+            else:
+                self.logger.debug(f"Not adding ID to error response (is_notification: {is_notification}, request_id: {request_id})")
+            
+            # Log error response for initialize requests
+            if method == "initialize":
+                self.logger.error("Initialize error response being sent:")
+                self.logger.error(json.dumps(error_response, indent=2))
+            
+            return error_response
     
     async def run_stdio(self):
         """Run server in stdio mode"""
         self._current_mode = 'stdio'
-        self.logger.info("Starting RFC MCP Server in stdio mode")
+        connection_id = f"stdio_{int(time.time())}"
+        self.logger.info(f"Starting RFC MCP Server in stdio mode (Connection ID: {connection_id})")
+        self.logger.info(f"Connection details - PID: {os.getpid()}, stdin: {sys.stdin}, stdout: {sys.stdout}")
         print("RFC MCP Server running on stdio", file=sys.stderr)
+        
+        request_count = 0
+        last_activity = time.time()
         
         while True:
             try:
+                self.logger.debug(f"Waiting for input (Connection: {connection_id}, Requests processed: {request_count})")
+                
+                # Check if stdin is still available
+                if sys.stdin.closed:
+                    self.logger.error(f"STDIN is closed (Connection: {connection_id})")
+                    break
+                
+                if sys.stdout.closed:
+                    self.logger.error(f"STDOUT is closed (Connection: {connection_id})")
+                    break
+                
                 line = input()
+                current_time = time.time()
+                time_since_last = current_time - last_activity
+                last_activity = current_time
+                request_count += 1
+                
+                self.logger.info(f"Received request #{request_count} (Connection: {connection_id}, Time since last: {time_since_last:.2f}s)")
+                
                 if not line.strip():
+                    self.logger.debug(f"Empty line received, skipping (Connection: {connection_id})")
                     continue
                 
-                self.logger.debug(f"Received stdio input: {line[:100]}...")
-                request = json.loads(line)
+                self.logger.debug(f"Processing input: {line[:100]}... (Connection: {connection_id})")
+                
+                try:
+                    request = json.loads(line)
+                    self.logger.debug(f"JSON parsed successfully (Connection: {connection_id})")
+                    self.logger.debug(f"Parsed request: {request}")
+                    
+                    # Validate basic request structure
+                    if not isinstance(request, dict):
+                        self.logger.error(f"Request is not a dict: {type(request)}")
+                        continue
+                    
+                    if "method" not in request:
+                        self.logger.error(f"Request missing method field: {request}")
+                        continue
+                        
+                except json.JSONDecodeError as json_err:
+                    self.logger.error(f"JSON parse error (Connection: {connection_id}): {str(json_err)}")
+                    self.logger.error(f"Problematic input: {line}")
+                    continue
+                
+                self.logger.debug(f"Handling request (Connection: {connection_id})")
                 response = await self.handle_request(request)
+                self.logger.debug(f"Request handled, preparing response (Connection: {connection_id})")
                 
-                response_str = json.dumps(response)
-                self.logger.debug(f"Sending stdio response: {response_str[:100]}...")
-                print(response_str)
-                sys.stdout.flush()
+                # Debug: Log and validate the response immediately after handle_request
+                if response is not None:
+                    self.logger.debug(f"Response from handle_request: {response}")
+                    
+                    # Validate response structure
+                    if not isinstance(response, dict):
+                        self.logger.error(f"handle_request returned non-dict: {type(response)}")
+                        response = None
+                    elif "jsonrpc" not in response:
+                        self.logger.error(f"handle_request returned response without jsonrpc field")
+                        response = None
+                    elif "id" in response:
+                        self.logger.debug(f"Response ID from handle_request: {response['id']} (type: {type(response['id'])})")
+                        if response["id"] is None:
+                            self.logger.warning(f"handle_request returned response with null ID")
+                        elif not isinstance(response["id"], (str, int, float)):
+                            self.logger.error(f"handle_request returned response with invalid ID type: {type(response['id'])}")
+                            response = None
                 
-            except EOFError:
-                self.logger.info("Received EOF, shutting down stdio server")
+                # Only send response if it's not None (notifications don't require responses)
+                if response is not None:
+                    self.logger.debug(f"Preparing to send response (Connection: {connection_id})")
+                    try:
+                        # Check stdout status before serialization
+                        if sys.stdout.closed:
+                            self.logger.error(f"STDOUT closed before response serialization (Connection: {connection_id})")
+                            break
+                        
+                        # Validate response structure before serialization
+                        if not isinstance(response, dict):
+                            self.logger.error(f"Response is not a dict: {type(response)} - {response}")
+                            response = {
+                                "jsonrpc": "2.0",
+                                "error": {
+                                    "code": -32603,
+                                    "message": "Invalid response type"
+                                }
+                            }
+                        
+                        # Ensure response has required fields
+                        if "jsonrpc" not in response:
+                            response["jsonrpc"] = "2.0"
+                        
+                        # Validate ID field if present
+                        if "id" in response:
+                            if response["id"] is None:
+                                self.logger.warning(f"Response has null ID, removing it")
+                                del response["id"]
+                            elif not isinstance(response["id"], (str, int, float)):
+                                self.logger.error(f"Response has invalid ID type: {type(response['id'])} - {response['id']}")
+                                del response["id"]
+                        
+                        # Serialize with additional safety checks
+                        try:
+                            # Debug: Log the response object before serialization
+                            self.logger.debug(f"Response object before serialization: {response}")
+                            if isinstance(response, dict) and "id" in response:
+                                self.logger.debug(f"Response ID value: {response['id']} (type: {type(response['id'])})")
+                            
+                            response_str = json.dumps(response, ensure_ascii=False, separators=(',', ':'))
+                            response_size = len(response_str)
+                            self.logger.info(f"Response serialized: {response_size} bytes (Connection: {connection_id})")
+                            
+                            # Debug: Log the actual JSON string being sent
+                            self.logger.debug(f"JSON being sent: {response_str[:500]}...")
+                            
+                            # Final validation: ensure the JSON doesn't contain "undefined"
+                            if '"undefined"' in response_str:
+                                self.logger.error(f"Response contains 'undefined' string: {response_str}")
+                                # Create a safe fallback response
+                                safe_response = {
+                                    "jsonrpc": "2.0",
+                                    "error": {
+                                        "code": -32603,
+                                        "message": "Response validation failed"
+                                    }
+                                }
+                                response_str = json.dumps(safe_response, ensure_ascii=True)
+                                response_size = len(response_str)
+                                self.logger.info(f"Safe fallback response created: {response_size} bytes")
+                            
+                            # Validate the JSON can be parsed back
+                            json.loads(response_str)
+                            self.logger.debug(f"JSON validation passed (Connection: {connection_id})")
+                            
+                        except (UnicodeDecodeError, UnicodeEncodeError) as unicode_error:
+                            self.logger.error(f"Unicode encoding error in response (Connection: {connection_id}): {str(unicode_error)}")
+                            # Create a safe ASCII-only response
+                            response_str = json.dumps(response, ensure_ascii=True, separators=(',', ':'))
+                            response_size = len(response_str)
+                            self.logger.info(f"Fallback ASCII response created: {response_size} bytes (Connection: {connection_id})")
+                            
+                        except json.JSONDecodeError as json_decode_error:
+                            self.logger.error(f"JSON validation failed (Connection: {connection_id}): {str(json_decode_error)}")
+                            # Create minimal error response
+                            error_response = {
+                                "jsonrpc": "2.0",
+                                "error": {
+                                    "code": -32603,
+                                    "message": "Response contains invalid JSON characters"
+                                }
+                            }
+                            # Add ID only if we have one from the original response
+                            if isinstance(response, dict) and response.get("id") is not None:
+                                error_response["id"] = response["id"]
+                            response_str = json.dumps(error_response, ensure_ascii=True)
+                            response_size = len(response_str)
+                            self.logger.info(f"Safe error response created: {response_size} bytes (Connection: {connection_id})")
+                        
+                        # Debug: Check for potentially problematic characters
+                        preview = response_str[:200]
+                        problematic_chars = []
+                        for char in preview:
+                            if ord(char) < 32 and char not in ['\t', '\n', '\r']:
+                                problematic_chars.append(f"\\x{ord(char):02x}")
+                            elif ord(char) > 127:
+                                problematic_chars.append(f"\\u{ord(char):04x}")
+                        
+                        if problematic_chars:
+                            self.logger.warning(f"Found potentially problematic characters: {problematic_chars[:10]} (Connection: {connection_id})")
+                        
+                        self.logger.debug(f"Response preview: {preview}...")
+                        
+                        # Check for large responses that might cause stdio issues
+                        if response_size > 100 * 1024:  # 100KB - much more conservative limit
+                            self.logger.warning(f"Large response detected: {response_size} bytes - truncating for stdio transport (Connection: {connection_id})")
+                            # Truncate the response if it's too large
+                            if isinstance(response, dict) and "result" in response and "content" in response["result"]:
+                                content_list = response["result"]["content"]
+                                if content_list and "text" in content_list[0]:
+                                    result_content = content_list[0]["text"]
+                                    # More aggressive truncation for stdio
+                                    max_content_size = 50000  # 50KB limit for content
+                                    if len(result_content) > max_content_size:
+                                        truncated_content = result_content[:max_content_size] + "\n\n[TRUNCATED: Response too large for stdio transport]"
+                                        response["result"]["content"][0]["text"] = truncated_content
+                                        response_str = json.dumps(response, ensure_ascii=True)
+                                        response_size = len(response_str)
+                                        self.logger.info(f"Response truncated to {response_size} bytes (Connection: {connection_id})")
+                        
+                        # Final size check - if still too large, create a minimal error response
+                        if response_size > 200 * 1024:  # 200KB absolute limit
+                            self.logger.error(f"Response still too large after truncation: {response_size} bytes - creating minimal response (Connection: {connection_id})")
+                            minimal_response = {
+                                "jsonrpc": "2.0",
+                                "error": {
+                                    "code": -32603,
+                                    "message": f"Response too large for stdio transport ({response_size} bytes). Try using HTTP mode or request metadata format only."
+                                }
+                            }
+                            # Add ID only if we have one from the original response
+                            if isinstance(response, dict) and response.get("id") is not None:
+                                minimal_response["id"] = response["id"]
+                            response_str = json.dumps(minimal_response, ensure_ascii=True)
+                            response_size = len(response_str)
+                            self.logger.info(f"Minimal error response created: {response_size} bytes (Connection: {connection_id})")
+                        
+                        # Check stdout status before writing
+                        if sys.stdout.closed:
+                            self.logger.error(f"STDOUT closed before writing response (Connection: {connection_id})")
+                            break
+                        
+                        # Attempt to write response with detailed error handling
+                        try:
+                            # Final safety check - ensure response is stdio-safe
+                            try:
+                                # Test if the response can be safely printed
+                                test_output = str(response_str)
+                                test_output.encode('utf-8')
+                                self.logger.debug(f"Response passed final safety check (Connection: {connection_id})")
+                            except Exception as safety_error:
+                                self.logger.error(f"Response failed safety check (Connection: {connection_id}): {str(safety_error)}")
+                                # Create ultra-safe ASCII response
+                                safe_response = {
+                                    "jsonrpc": "2.0",
+                                    "error": {
+                                        "code": -32603,
+                                        "message": "Response contains unsafe characters for stdio transport"
+                                    }
+                                }
+                                # Add ID only if we have one from the original response
+                                if isinstance(response, dict) and response.get("id") is not None:
+                                    safe_response["id"] = response["id"]
+                                response_str = json.dumps(safe_response, ensure_ascii=True)
+                                response_size = len(response_str)
+                                self.logger.info(f"Ultra-safe response created: {response_size} bytes (Connection: {connection_id})")
+                            
+                            self.logger.debug(f"Writing {response_size} byte response to stdout (Connection: {connection_id})")
+                            
+                            # Special logging for initialize responses
+                            if isinstance(response, dict) and response.get("result", {}).get("protocolVersion"):
+                                self.logger.info("📤 SENDING INITIALIZE RESPONSE")
+                                self.logger.info("=" * 50)
+                                self.logger.info(f"Initialize response being sent to client:")
+                                self.logger.info(f"  Response size: {response_size} bytes")
+                                self.logger.info(f"  Response ID: {response.get('id')} (type: {type(response.get('id')).__name__})")
+                                self.logger.info(f"  Protocol version: {response.get('result', {}).get('protocolVersion')}")
+                                self.logger.info(f"  Raw JSON being sent:")
+                                self.logger.info(f"  {response_str}")
+                                self.logger.info("=" * 50)
+                            
+                            # Write the response
+                            print(response_str)
+                            self.logger.debug(f"Response written to stdout buffer (Connection: {connection_id})")
+                            
+                            # Flush stdout
+                            self.logger.debug(f"Flushing stdout buffer (Connection: {connection_id})")
+                            sys.stdout.flush()
+                            self.logger.debug(f"Stdout buffer flushed successfully (Connection: {connection_id})")
+                            
+                            # Special confirmation for initialize responses
+                            if isinstance(response, dict) and response.get("result", {}).get("protocolVersion"):
+                                self.logger.info("✅ INITIALIZE RESPONSE SENT SUCCESSFULLY")
+                                self.logger.info(f"Client should now be initialized with protocol version {response.get('result', {}).get('protocolVersion')}")
+                            
+                            self.logger.info(f"Response sent successfully for request #{request_count} (Connection: {connection_id})")
+                            
+                        except BrokenPipeError as pipe_error:
+                            self.logger.error(f"Broken pipe during response transmission (Connection: {connection_id}): {str(pipe_error)}")
+                            self.logger.error(f"Client likely disconnected while receiving {response_size} byte response")
+                            break
+                        except IOError as io_error:
+                            self.logger.error(f"IO error during response transmission (Connection: {connection_id}): {str(io_error)}")
+                            self.logger.error(f"Error details: errno={getattr(io_error, 'errno', 'unknown')}")
+                            break
+                        except OSError as os_error:
+                            self.logger.error(f"OS error during response transmission (Connection: {connection_id}): {str(os_error)}")
+                            self.logger.error(f"OS error details: errno={getattr(os_error, 'errno', 'unknown')}")
+                            if os_error.errno == 32:  # EPIPE
+                                self.logger.error("Broken pipe (EPIPE) - client disconnected during response")
+                            break
+                        except Exception as write_error:
+                            self.logger.error(f"Unexpected error during response transmission (Connection: {connection_id}): {str(write_error)}", exc_info=True)
+                            break
+                            
+                    except BrokenPipeError as pipe_error:
+                        self.logger.error(f"Broken pipe error - client disconnected (Connection: {connection_id}): {str(pipe_error)}")
+                        break
+                    except IOError as io_error:
+                        self.logger.error(f"IO error during response transmission (Connection: {connection_id}): {str(io_error)}")
+                        break
+                    except Exception as json_error:
+                        self.logger.error(f"Error serializing/sending response (Connection: {connection_id}): {str(json_error)}", exc_info=True)
+                        try:
+                            error_response = {
+                                "jsonrpc": "2.0",
+                                "error": {
+                                    "code": -32603,
+                                    "message": f"Response serialization error: {str(json_error)}"
+                                }
+                            }
+                            # Add ID only if we have one from the original response
+                            if isinstance(response, dict) and response.get("id") is not None:
+                                error_response["id"] = response["id"]
+                            print(json.dumps(error_response, ensure_ascii=True))
+                            sys.stdout.flush()
+                            self.logger.info(f"Error response sent (Connection: {connection_id})")
+                        except Exception as error_send_error:
+                            self.logger.error(f"Failed to send error response (Connection: {connection_id}): {str(error_send_error)}")
+                            break
+                else:
+                    self.logger.debug(f"No response needed for request #{request_count} (notification) (Connection: {connection_id})")
+                
+            except EOFError as eof_error:
+                self.logger.info(f"Received EOF - client closed connection (Connection: {connection_id}): {str(eof_error)}")
+                self.logger.info(f"Connection stats - Requests processed: {request_count}, Duration: {time.time() - (last_activity - time_since_last if 'time_since_last' in locals() else 0):.2f}s")
+                break
+            except KeyboardInterrupt as kb_interrupt:
+                self.logger.info(f"Keyboard interrupt received (Connection: {connection_id}): {str(kb_interrupt)}")
+                break
+            except BrokenPipeError as pipe_error:
+                self.logger.error(f"Broken pipe in main loop - client disconnected abruptly (Connection: {connection_id}): {str(pipe_error)}")
+                break
+            except ConnectionResetError as conn_reset:
+                self.logger.error(f"Connection reset by peer (Connection: {connection_id}): {str(conn_reset)}")
+                break
+            except OSError as os_error:
+                self.logger.error(f"OS error in stdio loop (Connection: {connection_id}): {str(os_error)}")
+                if os_error.errno == 32:  # EPIPE
+                    self.logger.error("Broken pipe detected - client disconnected")
                 break
             except Exception as e:
-                self.logger.error(f"Error in stdio loop: {str(e)}", exc_info=True)
-                error_response = {
-                    "jsonrpc": "2.0",
-                    "id": None,
-                    "error": {
-                        "code": -32603,
-                        "message": f"Server error: {str(e)}"
-                    }
-                }
-                print(json.dumps(error_response))
-                sys.stdout.flush()
+                self.logger.error(f"Unexpected error in stdio loop (Connection: {connection_id}): {str(e)}", exc_info=True)
+                self.logger.error(f"Error type: {type(e).__name__}")
+                
+                # Try to send error response if possible
+                try:
+                    if not sys.stdout.closed:
+                        error_response = {
+                            "jsonrpc": "2.0",
+                            "error": {
+                                "code": -32603,
+                                "message": f"Server error: {str(e)}"
+                            }
+                        }
+                        print(json.dumps(error_response, ensure_ascii=True))
+                        sys.stdout.flush()
+                        self.logger.info(f"Error response sent for unexpected error (Connection: {connection_id})")
+                except Exception as error_send_error:
+                    self.logger.error(f"Failed to send error response for unexpected error (Connection: {connection_id}): {str(error_send_error)}")
+                
+                # Continue processing unless it's a critical error
+                if isinstance(e, (SystemExit, KeyboardInterrupt)):
+                    break
+        
+        # Connection cleanup logging
+        final_time = time.time()
+        total_duration = final_time - (last_activity - time_since_last if 'time_since_last' in locals() else final_time)
+        
+        self.logger.info(f"STDIO connection closed (Connection: {connection_id})")
+        self.logger.info(f"Final connection stats:")
+        self.logger.info(f"  - Total requests processed: {request_count}")
+        self.logger.info(f"  - Connection duration: {total_duration:.2f} seconds")
+        self.logger.info(f"  - Average request rate: {request_count/max(total_duration, 1):.2f} req/sec")
+        self.logger.info(f"  - STDIN status: {'closed' if sys.stdin.closed else 'open'}")
+        self.logger.info(f"  - STDOUT status: {'closed' if sys.stdout.closed else 'open'}")
+        self.logger.info(f"  - Process PID: {os.getpid()}")
     
     def run_http(self, port: int = 3000):
         """Run server in HTTP mode"""
@@ -203,17 +997,20 @@ class SimpleMCPServer:
             
             def do_GET(self):
                 """Handle GET requests"""
-                self.mcp_server.logger.info(f"GET {self.path} from {self.client_address[0]}")
+                client_info = f"{self.client_address[0]}:{self.client_address[1]}"
+                self.mcp_server.logger.info(f"HTTP GET {self.path} from {client_info}")
+                self.mcp_server.logger.debug(f"HTTP headers: {dict(self.headers)}")
                 
                 if self.path == '/' or self.path == '/health':
                     # Health check endpoint
                     response_data = {
                         "status": "ok",
-                        "name": "RFC and Internet Draft MCP Server",
+                        "name": "Standards Finder - RFC, Internet Draft, and OpenID Server",
                         "version": "0.2504.4",
                         "transport": "http",
                         "endpoints": {
                             "mcp": "/mcp (POST)",
+                            "message": "/message (POST) - SSE compatible",
                             "health": "/health (GET)"
                         }
                     }
@@ -223,24 +1020,84 @@ class SimpleMCPServer:
                     self.send_header('Access-Control-Allow-Origin', '*')
                     self.end_headers()
                     self.wfile.write(json.dumps(response_data).encode())
+                elif self.path == '/sse' or self.path.startswith('/sse/'):
+                    # SSE endpoint for MCP Inspector compatibility
+                    self.mcp_server.logger.info(f"SSE connection request ({client_info})")
+                    
+                    self.send_response(200)
+                    self.send_header('Content-Type', 'text/event-stream')
+                    self.send_header('Cache-Control', 'no-cache')
+                    self.send_header('Connection', 'keep-alive')
+                    self.send_header('Access-Control-Allow-Origin', '*')
+                    self.send_header('Access-Control-Allow-Headers', 'Content-Type')
+                    self.end_headers()
+                    
+                    # Send initial SSE connection established event
+                    sse_data = "event: connected\ndata: {\"status\": \"connected\"}\n\n"
+                    self.wfile.write(sse_data.encode())
+                    self.wfile.flush()
+                    
+                    # Keep connection alive (simplified - real SSE would need proper handling)
+                    self.mcp_server.logger.info(f"SSE connection established ({client_info})")
                 else:
                     self.send_response(404)
-                    self.send_header('Content-Type', 'text/plain')
+                    self.send_header('Content-Type', 'application/json')
                     self.send_header('Access-Control-Allow-Origin', '*')
                     self.end_headers()
-                    self.wfile.write(b'Not Found')
+                    error_response = {
+                        "error": "Not Found",
+                        "message": f"Path '{self.path}' not found. Available paths: /, /health, /mcp, /message",
+                        "available_paths": ["/", "/health", "/mcp", "/message", "/sse"]
+                    }
+                    self.wfile.write(json.dumps(error_response).encode())
             
             def do_POST(self):
                 """Handle POST requests"""
-                self.mcp_server.logger.info(f"POST {self.path} from {self.client_address[0]}")
+                client_info = f"{self.client_address[0]}:{self.client_address[1]}"
+                request_start = time.time()
+                self.mcp_server.logger.info(f"HTTP POST {self.path} from {client_info}")
                 
-                if self.path == '/mcp':
+                if self.path == '/mcp' or self.path == '/message':
+                    endpoint_type = "SSE-compatible" if self.path == '/message' else "standard MCP"
+                    self.mcp_server.logger.debug(f"{endpoint_type} request to {self.path} ({client_info})")
+                    
                     try:
-                        # Read request body
+                        # Read request body with error handling
                         content_length = int(self.headers.get('Content-Length', 0))
+                        
+                        if content_length == 0:
+                            self.mcp_server.logger.info(f"Empty request body - treating as connection test ({client_info})")
+                            self.send_response(200)
+                            self.send_header('Content-Type', 'application/json')
+                            self.send_header('Access-Control-Allow-Origin', '*')
+                            self.end_headers()
+                            health_response = {
+                                "status": "ok",
+                                "message": "MCP server is running",
+                                "transport": "http",
+                                "endpoint": self.path
+                            }
+                            self.wfile.write(json.dumps(health_response).encode())
+                            return
+                        
                         body = self.rfile.read(content_length).decode('utf-8')
                         
-                        self.mcp_server.logger.debug(f"Received HTTP request body: {body[:200]}...")
+                        if not body.strip():
+                            self.mcp_server.logger.info(f"Whitespace-only request body - treating as connection test ({client_info})")
+                            self.send_response(200)
+                            self.send_header('Content-Type', 'application/json')
+                            self.send_header('Access-Control-Allow-Origin', '*')
+                            self.end_headers()
+                            health_response = {
+                                "status": "ok",
+                                "message": "MCP server is running",
+                                "transport": "http",
+                                "endpoint": self.path
+                            }
+                            self.wfile.write(json.dumps(health_response).encode())
+                            return
+                        
+                        self.mcp_server.logger.debug(f"Received HTTP request body ({len(body)} bytes): {body[:200]}...")
                         
                         # Parse JSON request
                         request = json.loads(body)
@@ -251,22 +1108,75 @@ class SimpleMCPServer:
                         response = loop.run_until_complete(self.mcp_server.handle_request(request))
                         loop.close()
                         
-                        response_json = json.dumps(response)
-                        self.mcp_server.logger.debug(f"Sending HTTP response: {response_json[:200]}...")
-                        
-                        # Send response
-                        self.send_response(200)
+                        # Handle response
+                        if response is not None:
+                            response_json = json.dumps(response)
+                            response_size = len(response_json)
+                            processing_time = time.time() - request_start
+                            
+                            self.mcp_server.logger.info(f"HTTP response ready: {response_size} bytes, processed in {processing_time:.2f}s ({client_info})")
+                            self.mcp_server.logger.debug(f"Response preview: {response_json[:200]}...")
+                            
+                            self.send_response(200)
+                            self.send_header('Content-Type', 'application/json')
+                            self.send_header('Access-Control-Allow-Origin', '*')
+                            self.end_headers()
+                            self.wfile.write(response_json.encode())
+                            
+                            self.mcp_server.logger.info(f"HTTP response sent successfully ({client_info})")
+                        else:
+                            # For notifications
+                            processing_time = time.time() - request_start
+                            self.mcp_server.logger.info(f"HTTP notification processed in {processing_time:.2f}s ({client_info})")
+                            
+                            notification_response = {
+                                "status": "ok",
+                                "message": "Notification processed"
+                            }
+                            
+                            self.send_response(200)
+                            self.send_header('Content-Type', 'application/json')
+                            self.send_header('Access-Control-Allow-Origin', '*')
+                            self.end_headers()
+                            self.wfile.write(json.dumps(notification_response).encode())
+                    
+                    except json.JSONDecodeError as json_err:
+                        self.mcp_server.logger.error(f"JSON parse error ({client_info}): {str(json_err)}")
+                        self.send_response(400)
                         self.send_header('Content-Type', 'application/json')
                         self.send_header('Access-Control-Allow-Origin', '*')
                         self.end_headers()
-                        self.wfile.write(response_json.encode())
+                        error_response = {
+                            "jsonrpc": "2.0",
+                            "error": {
+                                "code": -32700,
+                                "message": f"Parse error: {str(json_err)}"
+                            }
+                        }
+                        self.wfile.write(json.dumps(error_response).encode())
+                    
+                    except Exception as e:
+                        processing_time = time.time() - request_start
+                        self.mcp_server.logger.error(f"Error processing HTTP request from {client_info} after {processing_time:.2f}s: {str(e)}", exc_info=True)
+                        
+                        self.send_response(500)
+                        self.send_header('Content-Type', 'application/json')
+                        self.send_header('Access-Control-Allow-Origin', '*')
+                        self.end_headers()
+                        error_response = {
+                            "jsonrpc": "2.0",
+                            "error": {
+                                "code": -32603,
+                                "message": f"Server error: {str(e)}"
+                            }
+                        }
+                        self.wfile.write(json.dumps(error_response).encode())
                         
                     except Exception as e:
                         self.mcp_server.logger.error(f"Error processing HTTP request: {str(e)}", exc_info=True)
                         
                         error_response = {
                             "jsonrpc": "2.0",
-                            "id": None,
                             "error": {
                                 "code": -32603,
                                 "message": f"Server error: {str(e)}"
@@ -280,10 +1190,15 @@ class SimpleMCPServer:
                         self.wfile.write(json.dumps(error_response).encode())
                 else:
                     self.send_response(404)
-                    self.send_header('Content-Type', 'text/plain')
+                    self.send_header('Content-Type', 'application/json')
                     self.send_header('Access-Control-Allow-Origin', '*')
                     self.end_headers()
-                    self.wfile.write(b'Not Found')
+                    error_response = {
+                        "error": "Not Found",
+                        "message": f"Path '{self.path}' not found. Available paths: /, /health, /mcp, /message",
+                        "available_paths": ["/", "/health", "/mcp", "/message", "/sse"]
+                    }
+                    self.wfile.write(json.dumps(error_response).encode())
             
             def log_message(self, format, *args):
                 """Override to use our logger"""
@@ -1546,7 +2461,7 @@ openid_service = SimpleOpenIDService()
 
 # RFC Tools
 @mcp.tool
-async def get_rfc(number: str, format: str = "full") -> str:
+async def get_rfc(number: str, format: str = "full", _request_id: str = None, _progress_callback = None) -> str:
     """Fetch an RFC document by its number"""
     logger.info(f"Tool call: get_rfc(number={number}, format={format})")
     

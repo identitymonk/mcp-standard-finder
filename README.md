@@ -41,9 +41,15 @@ A comprehensive Python MCP server for fetching, parsing, and reading RFCs and In
 - **Section-based Parsing** - Navigate documents by sections and subsections
 - **Multiple Output Formats** - Full document, metadata only, or sections only
 - **Robust Error Handling** - Graceful fallbacks and informative error messages
-- **MCP Protocol Compliant** - Full integration with MCP-compatible clients
+- **MCP Protocol Compliant** - Full integration with MCP-compatible clients and MCP Inspector
 - **Dual Transport Support** - Both stdio and HTTP transport modes
 - **Enhanced RFC Parsing** - Improved title extraction for various RFC formats
+- **Progress Notifications** - Real-time progress updates for long-running operations
+- **Advanced Logging** - Comprehensive logging with detailed initialize phase tracking
+- **MCP Inspector Compatible** - Proper tool schema format with parameter validation
+- **Notification Support** - Handles all standard MCP notifications correctly
+- **Transport Robustness** - Enhanced error handling and connection management
+- **JSON-RPC 2.0 Compliant** - Full compliance with JSON-RPC 2.0 specification
 
 ## Installation
 
@@ -343,7 +349,7 @@ python3 standard_finder.py --log-dir /var/log/rfc    # Custom log directory
 
 ## Logging
 
-The server includes comprehensive logging with automatic rotation:
+The server includes comprehensive logging with automatic rotation and enhanced debugging capabilities:
 
 ### Log Features
 - **Instance-specific log files** - Each server instance gets its own log file
@@ -351,6 +357,10 @@ The server includes comprehensive logging with automatic rotation:
 - **Timestamped filenames** - Format: `rfc_server_YYYYMMDD_HHMMSS_PID.log`
 - **Multiple log levels** - DEBUG, INFO, WARNING, ERROR
 - **Structured logging** - Includes timestamps, function names, and line numbers
+- **Enhanced Initialize Logging** - Detailed tracking of MCP initialization phase
+- **Request/Response Logging** - Complete visibility into MCP protocol exchanges
+- **Progress Notifications** - Real-time logging of long-running operations
+- **Error Diagnostics** - Comprehensive error reporting with full context
 
 ### Log Location
 - **Default**: `/tmp/rfc_server/`
@@ -358,18 +368,47 @@ The server includes comprehensive logging with automatic rotation:
 - **Permissions**: Ensure the directory is writable
 
 ### Log Content
-- Server startup/shutdown events
-- All MCP requests and responses
-- RFC and Internet Draft fetch operations
-- Error conditions with stack traces
-- Performance metrics and cache hits
+- **Server Lifecycle**: Startup/shutdown events with detailed configuration
+- **MCP Protocol**: All requests, responses, and notifications with full JSON
+- **Initialize Phase**: Detailed logging of client initialization process
+- **Tool Execution**: RFC and Internet Draft fetch operations with timing
+- **Error Conditions**: Stack traces with full request context
+- **Performance Metrics**: Cache hits, response sizes, and timing data
+- **Transport Layer**: STDIO and HTTP connection management
+- **Validation**: JSON-RPC 2.0 compliance and schema validation
+
+### Enhanced Initialize Logging
+```
+🚀 INITIALIZE REQUEST RECEIVED
+Handling request: initialize (ID: 1)
+Request timestamp: 2024-10-01T18:08:29.123456
+Validating initialize request format:
+  ✅ protocolVersion: str
+     Protocol version: 2024-11-05
+  ✅ clientInfo: dict
+     Client name: mcp-client
+     Client version: 1.0.0
+
+📤 SENDING INITIALIZE RESPONSE
+==================================================
+Initialize response being sent to client:
+  Response size: 456 bytes
+  Response ID: 1 (type: int)
+  Raw JSON: {"jsonrpc":"2.0","id":1,"result":...}
+==================================================
+✅ INITIALIZE RESPONSE SENT SUCCESSFULLY
+
+📢 NOTIFICATIONS/INITIALIZED RECEIVED
+✅ Client initialization confirmed - server is ready for requests
+```
 
 ### Example Log Entries
 ```
-2024-01-15 10:30:15,123 - rfc_server - INFO - main:45 - Starting RFC MCP Server with arguments: {'http': True, 'port': 3000}
-2024-01-15 10:30:20,456 - rfc_server - INFO - handle_request:78 - Handling request: tools/call (ID: 1)
-2024-01-15 10:30:20,789 - rfc_server.rfc_service - INFO - fetch_rfc:234 - Fetching RFC 2616
-2024-01-15 10:30:22,012 - rfc_server.rfc_service - INFO - fetch_rfc:245 - Successfully fetched RFC 2616 (425678 bytes)
+2024-10-01 18:08:29,123 - rfc_server - INFO - main:45 - Starting RFC MCP Server with arguments: {'http': True, 'port': 3000}
+2024-10-01 18:08:29,456 - rfc_server - INFO - handle_request:289 - 🚀 INITIALIZE REQUEST RECEIVED
+2024-10-01 18:08:29,789 - rfc_server - INFO - handle_request:345 - ✅ JSON-RPC 2.0 version confirmed
+2024-10-01 18:08:30,012 - rfc_server - INFO - run_stdio:837 - ✅ INITIALIZE RESPONSE SENT SUCCESSFULLY
+2024-10-01 18:08:30,234 - rfc_server - INFO - handle_request:567 - 📢 NOTIFICATIONS/INITIALIZED RECEIVED
 ```
 
 ## Testing HTTP Mode
@@ -436,6 +475,39 @@ python3 tests/test_final.py
 npm test
 ```
 
+## MCP Inspector Compatibility
+
+The server is fully compatible with [MCP Inspector](https://github.com/modelcontextprotocol/inspector) for debugging and testing MCP tools:
+
+### Schema Format
+- **Wrapped Parameters**: Tool schemas use the MCP Inspector expected format with named input wrappers (e.g., `GetRfcInput`, `SearchRfcsInput`)
+- **Backward Compatibility**: Still supports direct parameter format for existing clients
+- **Auto-Detection**: Automatically detects and handles both parameter formats
+- **Comprehensive Schemas**: All 9 tools have detailed JSON Schema definitions with proper validation
+- **Parameter Descriptions**: Rich parameter descriptions and constraints for better UX
+
+### Protocol Compliance
+- **JSON-RPC 2.0**: Full compliance with JSON-RPC 2.0 specification
+- **MCP Notifications**: Proper handling of `notifications/initialized` and other standard notifications
+- **ID Consistency**: Maintains ID type consistency between requests and responses
+- **Error Handling**: Proper error response format with appropriate error codes
+
+### Testing with MCP Inspector
+```bash
+# Start the server in HTTP mode
+python3 standard_finder.py --http --port 3000
+
+# Connect MCP Inspector to http://localhost:3000/mcp
+# All tools will appear with proper parameter schemas and validation
+# Test both direct and wrapped parameter formats
+```
+
+### Debugging Features
+- **Enhanced Logging**: Detailed logging for initialize phase and all MCP operations
+- **Request/Response Tracking**: Complete visibility into MCP protocol exchanges
+- **Validation Logging**: Detailed validation of requests and responses
+- **Error Diagnostics**: Comprehensive error reporting with stack traces
+
 ## Transport Modes
 
 ### Stdio Mode (Default)
@@ -485,6 +557,18 @@ await mcp.call_tool('get_working_group_documents', {
     'include_drafts': False, 
     'limit': 10
 })
+
+# Get OpenID Connect Core specification
+await mcp.call_tool('get_openid_spec', {
+    'name': 'openid-connect-core',
+    'format': 'metadata'
+})
+
+# Search for OAuth specifications
+await mcp.call_tool('search_openid_specs', {
+    'query': 'oauth',
+    'limit': 5
+})
 ```
 
 ### Using Resources
@@ -504,6 +588,92 @@ await mcp.read_resource('wg://tls/drafts')        # Only drafts
 ## License
 
 This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
+
+## Recent Improvements
+
+### Version 0.2504.4 - Latest Enhancements
+
+#### MCP Inspector Compatibility
+- **Tool Schema Format**: Updated to MCP Inspector compatible format with named input wrappers
+- **Parameter Handling**: Dual format support - handles both wrapped and direct parameter formats
+- **Auto-Detection**: Automatically detects parameter format and processes accordingly
+- **Comprehensive Schemas**: All 9 tools have detailed JSON Schema definitions
+
+#### Protocol Compliance
+- **JSON-RPC 2.0**: Full compliance with JSON-RPC 2.0 specification
+- **MCP Notifications**: Added support for `notifications/initialized` and other standard notifications
+- **ID Consistency**: Enhanced ID type preservation between requests and responses
+- **Error Handling**: Improved error response format with proper error codes
+
+#### Enhanced Logging
+- **Initialize Phase Tracking**: Detailed logging of the complete MCP initialization sequence
+- **Request/Response Logging**: Full visibility into all MCP protocol exchanges
+- **Progress Notifications**: Real-time logging of long-running operations
+- **Validation Logging**: Comprehensive validation of requests and responses
+- **Error Diagnostics**: Enhanced error reporting with full context and stack traces
+
+#### Transport Layer Improvements
+- **STDIO Robustness**: Enhanced error handling and connection management
+- **Response Size Management**: Automatic truncation for large responses in STDIO mode
+- **Character Sanitization**: Improved handling of special characters in responses
+- **Connection Tracking**: Detailed logging of connection lifecycle and status
+
+#### Tool Enhancements
+- **Progress Callbacks**: Added progress notification support to key tools
+- **Parameter Validation**: Enhanced parameter validation with detailed error messages
+- **OpenID Foundation Support**: Complete integration with OpenID specification catalog
+- **Working Group Documents**: Enhanced metadata and filtering capabilities
+
+### Compatibility
+- **Backward Compatible**: All existing clients continue to work without changes
+- **MCP Inspector Ready**: Full compatibility with MCP Inspector for debugging
+- **Q CLI Compatible**: Works seamlessly with Q CLI and other MCP clients
+- **HTTP/STDIO Dual Mode**: Both transport modes fully supported and tested
+
+## Troubleshooting
+
+### Common Issues
+
+#### MCP Inspector Connection Issues
+```bash
+# Ensure server is running in HTTP mode
+python3 standard_finder.py --http --port 3000
+
+# Check server is responding
+curl http://localhost:3000/health
+
+# Verify MCP endpoint
+curl -X POST http://localhost:3000/mcp \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test","version":"1.0"}}}'
+```
+
+#### STDIO Mode Issues
+- **Large Response Truncation**: Responses over 200KB are automatically truncated in STDIO mode
+- **Character Encoding**: Special characters are sanitized for STDIO compatibility
+- **Connection Drops**: Check logs for transport closure issues
+
+#### Logging and Debugging
+```bash
+# Enable debug logging
+python3 standard_finder.py --log-level DEBUG
+
+# Check log files
+ls -la /tmp/rfc_server/
+
+# Monitor real-time logs
+tail -f /tmp/rfc_server/rfc_server_*.log
+```
+
+#### Tool Parameter Issues
+- **MCP Inspector Format**: Use wrapped parameters like `{"GetRfcInput": {"number": "2616"}}`
+- **Direct Format**: Use direct parameters like `{"number": "2616", "format": "metadata"}`
+- **Auto-Detection**: Server automatically detects and handles both formats
+
+### Performance Optimization
+- **Caching**: Responses are cached in memory for repeated requests
+- **Format Selection**: Use `"metadata"` format for faster responses when full content isn't needed
+- **Limit Parameters**: Use appropriate limits for search operations to avoid timeouts
 
 ## Implementation Details
 
