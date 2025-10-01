@@ -2,7 +2,7 @@
 
 A comprehensive Python MCP server for fetching, parsing, and reading RFCs and Internet Drafts from the IETF websites. Standards Finder provides tools and resources to interact with RFC documents, Internet Drafts, and IETF working group documents programmatically.
 
-**✅ FULLY FUNCTIONAL** - All features tested and working!
+> I want to recognize  [@mjpitz/mcp-rfc](https://github.com/mjpitz/mcp-rfc) for the base. This solution is a python port and extension using [Kiro](https://kiro.dev/)
 
 ## Features
 
@@ -19,6 +19,14 @@ A comprehensive Python MCP server for fetching, parsing, and reading RFCs and In
 - Extract specific sections from Internet Drafts
 - Parse both HTML and TXT format Internet Drafts
 - Version-aware handling (e.g., `draft-name-05` vs `draft-name` for latest)
+
+### OpenID Foundation Support
+- Fetch OpenID Foundation specifications by name
+- Search for OpenID specifications by keyword
+- Extract specific sections from OpenID specifications
+- Support for all major OpenID specs (Connect Core, Discovery, Registration, etc.)
+- Parse HTML format specifications with metadata extraction
+- Progress notifications for long-running operations
 
 ### Working Group Support
 - **Complete Working Group Documents** - Retrieve all RFCs and Internet Drafts for any IETF working group
@@ -39,9 +47,7 @@ A comprehensive Python MCP server for fetching, parsing, and reading RFCs and In
 
 ## Installation
 
-### Simple Server (Recommended - Zero Dependencies)
-
-The standard finder uses only Python standard library:
+The standard finder uses only Python standard libraries:
 
 ```bash
 # Run immediately - no installation needed!
@@ -52,28 +58,6 @@ python3 standard_finder.py --http
 
 # Run in HTTP mode on custom port
 python3 standard_finder.py --http --port 8080
-```
-
-### Alternative Installation (Optional Dependencies)
-
-If you prefer to use external dependencies for enhanced features:
-
-```bash
-# Install Python dependencies (optional)
-pip install -r requirements.txt
-
-# The standard finder works without these dependencies
-python3 standard_finder.py
-```
-
-### Using NPM Scripts
-
-```bash
-npm run install     # Install Python dependencies
-npm start           # Start standard finder (stdio)
-npm run start:http  # Start standard finder (HTTP)
-npm run start:full    # Start with optional dependencies
-npm test            # Run tests
 ```
 
 ## Configuration
@@ -95,22 +79,15 @@ npm test            # Run tests
 }
 ```
 
-**For HTTP Mode:**
-```json
-{
-  "mcpServers": {
-    "rfc-server": {
-      "command": "python3",
-      "args": ["standard_finder.py", "--http", "--port", "3000"],
-      "cwd": "/path/to/mcp-rfc",
-      "disabled": false,
-      "autoApprove": []
-    }
-  }
-}
-```
-
 **Or connect directly via HTTP URL:**
+
+Launch the server:
+
+```bash
+python3 /path/to/mcp-standard-finder/standard_finder.py --http --port 3000
+```
+Then configure your MCP Client:
+
 ```json
 {
   "mcpServers": {
@@ -274,6 +251,62 @@ Get all active RFCs and Internet Drafts for a specific IETF working group.
 - List of active Internet Drafts from the working group
 - Summary statistics (total counts)
 
+### OpenID Foundation Tools
+
+#### get_openid_spec
+
+Fetch an OpenID Foundation specification by its name.
+
+**Parameters:**
+- `name` (string): Name or identifier of the OpenID specification
+- `format` (string, optional): Output format - "full" (default), "metadata", or "sections"
+
+**Examples:**
+```python
+# Get OpenID Connect Core specification
+await mcp.call_tool('get_openid_spec', {'name': 'openid-connect-core'})
+
+# Get only metadata
+await mcp.call_tool('get_openid_spec', {'name': 'openid-connect-discovery', 'format': 'metadata'})
+
+# Get sections only
+await mcp.call_tool('get_openid_spec', {'name': 'oauth-2.0-multiple-response-types', 'format': 'sections'})
+```
+
+#### search_openid_specs
+
+Search for OpenID Foundation specifications by keyword.
+
+**Parameters:**
+- `query` (string): Search query/keyword
+- `limit` (integer, optional): Maximum number of results (default: 10)
+
+**Examples:**
+```python
+# Search for OpenID Connect specifications
+await mcp.call_tool('search_openid_specs', {'query': 'connect'})
+
+# Search for OAuth specifications
+await mcp.call_tool('search_openid_specs', {'query': 'oauth', 'limit': 5})
+```
+
+#### get_openid_spec_section
+
+Get a specific section from an OpenID Foundation specification.
+
+**Parameters:**
+- `name` (string): Name of the OpenID specification
+- `section` (string): Section title or identifier to retrieve
+
+**Examples:**
+```python
+# Get authentication section from OpenID Connect Core
+await mcp.call_tool('get_openid_spec_section', {
+    'name': 'openid-connect-core',
+    'section': 'Authentication'
+})
+```
+
 ## Available Resources
 
 ### Resource Templates
@@ -291,6 +324,10 @@ Get all active RFCs and Internet Drafts for a specific IETF working group.
 - `wg://{group}`: Get all documents (RFCs and Internet Drafts) for a working group
 - `wg://{group}/rfcs`: Get only RFCs for a working group
 - `wg://{group}/drafts`: Get only Internet Drafts for a working group
+
+#### OpenID Foundation Resources
+- `openid://{name}`: Get an OpenID Foundation specification by name
+- `openid://search/{query}`: Search for OpenID specifications by keyword
 
 ## Command Line Options
 
@@ -366,6 +403,16 @@ curl -X POST http://localhost:3000/mcp \
 curl -X POST http://localhost:3000/mcp \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"get_working_group_documents","arguments":{"working_group":"oauth","limit":10}}}'
+
+# Get OpenID Connect Core specification
+curl -X POST http://localhost:3000/mcp \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":5,"method":"tools/call","params":{"name":"get_openid_spec","arguments":{"name":"openid-connect-core","format":"metadata"}}}'
+
+# Search for OpenID specifications
+curl -X POST http://localhost:3000/mcp \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":6,"method":"tools/call","params":{"name":"search_openid_specs","arguments":{"query":"oauth","limit":5}}}'
 ```
 
 ## Development
@@ -374,22 +421,16 @@ curl -X POST http://localhost:3000/mcp \
 ```
 standard_finder.py             # Main MCP server (zero dependencies)
 requirements.txt               # Optional Python dependencies
-test_final.py                  # Comprehensive test suite
-test_working_groups.py         # Working group specific tests
-test_server.py                 # Original test suite
+tests/
+  test_final.py                # Comprehensive test suite
 README.md                      # This file
+output/                        # Generated output files
 ```
 
 ### Running Tests
 ```bash
 # Run comprehensive test suite
-python3 test_final.py
-
-# Run working group specific tests
-python3 test_working_groups.py
-
-# Run original test suite
-python3 test_server.py
+python3 tests/test_final.py
 
 # OR use npm
 npm test

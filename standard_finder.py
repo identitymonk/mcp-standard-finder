@@ -114,7 +114,7 @@ class SimpleMCPServer:
                 
                 if tool_name in self.tools:
                     # Pass request_id to tools that support progress notifications
-                    if tool_name in ['get_internet_draft', 'get_rfc']:
+                    if tool_name in ['get_internet_draft', 'get_rfc', 'get_openid_spec', 'search_openid_specs']:
                         arguments['_request_id'] = request_id
                         arguments['_progress_callback'] = self.send_progress_notification
                     
@@ -627,6 +627,302 @@ class SimpleRFCService:
             'sections': sections,
             'fullText': text
         }
+
+
+class SimpleOpenIDService:
+    """OpenID Foundation drafts and standards service"""
+    
+    BASE_URL = "https://openid.net"
+    SPECS_URL = "https://openid.net/developers/specs"
+    
+    def __init__(self):
+        self.logger = logging.getLogger('rfc_server.openid_service')
+    
+    def fetch_url(self, url: str) -> str:
+        """Fetch content from URL"""
+        try:
+            with urllib.request.urlopen(url, timeout=30) as response:
+                return response.read().decode('utf-8')
+        except Exception as e:
+            raise Exception(f"Failed to fetch {url}: {str(e)}")
+    
+    async def fetch_openid_spec(self, spec_name: str, request_id: str = None, progress_callback = None) -> Dict[str, Any]:
+        """Fetch an OpenID specification by name"""
+        self.logger.info(f"Fetching OpenID spec: {spec_name}")
+        
+        cache_key = f"openid_{spec_name}"
+        if cache_key in document_cache:
+            if progress_callback and request_id:
+                await progress_callback(request_id, 80, "Found in cache, retrieving...")
+            return document_cache[cache_key]
+        
+        if progress_callback and request_id:
+            await progress_callback(request_id, 20, "Searching OpenID specifications...")
+        
+        # Try to find the spec URL
+        spec_url = await self._find_spec_url(spec_name, request_id, progress_callback)
+        
+        if not spec_url:
+            raise Exception(f"Could not find OpenID specification: {spec_name}")
+        
+        if progress_callback and request_id:
+            await progress_callback(request_id, 50, f"Fetching specification from {spec_url}")
+        
+        try:
+            content = self.fetch_url(spec_url)
+            self.logger.info(f"Successfully fetched content from {spec_url}, length: {len(content)}")
+            
+            if progress_callback and request_id:
+                await progress_callback(request_id, 70, "Parsing specification content...")
+            
+            spec_data = self._parse_openid_spec(content, spec_name, spec_url)
+            self.logger.info(f"Successfully parsed OpenID spec {spec_name}")
+            document_cache[cache_key] = spec_data
+            return spec_data
+            
+        except Exception as e:
+            self.logger.error(f"Failed to fetch OpenID spec {spec_name}: {str(e)}")
+            raise Exception(f"Failed to fetch OpenID spec {spec_name}: {str(e)}")
+    
+    async def _find_spec_url(self, spec_name: str, request_id: str = None, progress_callback = None) -> Optional[str]:
+        """Find the URL for an OpenID specification"""
+        try:
+            if progress_callback and request_id:
+                await progress_callback(request_id, 25, "Fetching OpenID specs page...")
+            
+            # Fetch the main specs page
+            specs_content = self.fetch_url(self.SPECS_URL)
+            
+            if progress_callback and request_id:
+                await progress_callback(request_id, 35, "Searching for specification...")
+            
+            # Common OpenID spec patterns and their likely URLs
+            spec_patterns = {
+                'openid-connect-core': 'https://openid.net/specs/openid-connect-core-1_0.html',
+                'openid-connect-discovery': 'https://openid.net/specs/openid-connect-discovery-1_0.html',
+                'openid-connect-registration': 'https://openid.net/specs/openid-connect-registration-1_0.html',
+                'openid-connect-session': 'https://openid.net/specs/openid-connect-session-1_0.html',
+                'openid-connect-frontchannel': 'https://openid.net/specs/openid-connect-frontchannel-1_0.html',
+                'openid-connect-backchannel': 'https://openid.net/specs/openid-connect-backchannel-1_0.html',
+                'oauth-2.0-multiple-response-types': 'https://openid.net/specs/oauth-v2-multiple-response-types-1_0.html',
+                'oauth-2.0-form-post-response-mode': 'https://openid.net/specs/oauth-v2-form-post-response-mode-1_0.html',
+                'openid-financial-api-part-1': 'https://openid.net/specs/openid-financial-api-part-1-1_0.html',
+                'openid-financial-api-part-2': 'https://openid.net/specs/openid-financial-api-part-2-1_0.html',
+            }
+            
+            # Normalize spec name for lookup
+            normalized_name = spec_name.lower().replace('_', '-').replace(' ', '-')
+            
+            # Try direct pattern match first
+            if normalized_name in spec_patterns:
+                return spec_patterns[normalized_name]
+            
+            # Try partial matches
+            for pattern, url in spec_patterns.items():
+                if normalized_name in pattern or pattern in normalized_name:
+                    return url
+            
+            # Try to parse the specs page for links
+            import re
+            
+            # Look for links that might match the spec name
+            link_pattern = r'href=["\']([^"\']*\.html)["\'][^>]*>([^<]*)</a>'
+            links = re.findall(link_pattern, specs_content, re.IGNORECASE)
+            
+            for url, link_text in links:
+                if (normalized_name in link_text.lower() or 
+                    normalized_name in url.lower() or
+                    any(word in link_text.lower() for word in normalized_name.split('-') if len(word) > 3)):
+                    
+                    # Make URL absolute if relative
+                    if url.startswith('/'):
+                        return f"{self.BASE_URL}{url}"
+                    elif not url.startswith('http'):
+                        return f"{self.BASE_URL}/specs/{url}"
+                    else:
+                        return url
+            
+            return None
+            
+        except Exception as e:
+            self.logger.error(f"Error finding spec URL for {spec_name}: {e}")
+            return None
+    
+    def _parse_openid_spec(self, content: str, spec_name: str, url: str) -> Dict[str, Any]:
+        """Parse OpenID specification content"""
+        
+        self.logger.debug(f"Parsing OpenID spec content, length: {len(content)}")
+        
+        # Try to extract title
+        title_match = re.search(r'<title[^>]*>([^<]+)</title>', content, re.IGNORECASE)
+        title = title_match.group(1).strip() if title_match else spec_name
+        self.logger.debug(f"Extracted title: {title}")
+        
+        # Try to extract abstract/introduction
+        abstract = ""
+        abstract_patterns = [
+            r'<div[^>]*class[^>]*abstract[^>]*>(.*?)</div>',
+            r'<section[^>]*id[^>]*abstract[^>]*>(.*?)</section>',
+            r'<h[12][^>]*>Abstract</h[12]>(.*?)(?=<h[12]|$)',
+            r'<h[12][^>]*>Introduction</h[12]>(.*?)(?=<h[12]|$)'
+        ]
+        
+        for pattern in abstract_patterns:
+            match = re.search(pattern, content, re.IGNORECASE | re.DOTALL)
+            if match:
+                abstract_html = match.group(1)
+                # Clean HTML tags
+                abstract = re.sub(r'<[^>]+>', ' ', abstract_html).strip()
+                abstract = ' '.join(abstract.split())[:500]  # Limit length
+                break
+        
+        # Extract sections
+        sections = []
+        
+        # Look for section headings
+        section_patterns = [
+            r'<h([2-6])[^>]*id[^>]*=["\']*([^"\'>\s]+)[^>]*>([^<]+)</h\1>',
+            r'<h([2-6])[^>]*>(\d+\.?\d*\.?\s*[^<]+)</h\1>'
+        ]
+        
+        for pattern in section_patterns:
+            matches = re.finditer(pattern, content, re.IGNORECASE)
+            for match in matches:
+                groups = match.groups()
+                level = int(groups[0])
+                
+                if len(groups) >= 3:
+                    # Pattern with id attribute
+                    section_id = groups[1]
+                    section_title = groups[2].strip()
+                else:
+                    # Pattern without id
+                    section_id = ""
+                    section_title = groups[1].strip() if len(groups) > 1 else ""
+                
+                # Extract content after this heading until next heading of same or higher level
+                start_pos = match.end()
+                next_heading_pattern = f'<h[1-{level}][^>]*>'
+                next_match = re.search(next_heading_pattern, content[start_pos:], re.IGNORECASE)
+                
+                if next_match:
+                    section_content = content[start_pos:start_pos + next_match.start()]
+                else:
+                    section_content = content[start_pos:start_pos + 2000]  # Limit content
+                
+                # Clean HTML from content
+                clean_content = re.sub(r'<[^>]+>', ' ', section_content).strip()
+                clean_content = ' '.join(clean_content.split())[:1000]  # Limit length
+                
+                sections.append({
+                    'title': section_title,
+                    'content': clean_content,
+                    'level': level,
+                    'id': section_id
+                })
+        
+        # Extract authors if available
+        authors = []
+        author_patterns = [
+            r'<meta[^>]*name[^>]*author[^>]*content[^>]*=["\']*([^"\']+)',
+            r'<div[^>]*class[^>]*author[^>]*>([^<]+)</div>',
+            r'Author[s]?:\s*([^<\n]+)'
+        ]
+        
+        for pattern in author_patterns:
+            matches = re.finditer(pattern, content, re.IGNORECASE)
+            for match in matches:
+                author = match.group(1).strip()
+                if author and author not in authors:
+                    authors.append(author)
+        
+        # Extract date
+        date = ""
+        date_patterns = [
+            r'<meta[^>]*name[^>]*date[^>]*content[^>]*=["\']*([^"\']+)',
+            r'Date:\s*([^<\n]+)',
+            r'(\d{1,2}\s+\w+\s+\d{4})',
+            r'(\w+\s+\d{4})'
+        ]
+        
+        for pattern in date_patterns:
+            match = re.search(pattern, content, re.IGNORECASE)
+            if match:
+                date = match.group(1).strip()
+                break
+        
+        return {
+            'metadata': {
+                'name': spec_name,
+                'title': title,
+                'authors': authors,
+                'date': date,
+                'abstract': abstract,
+                'url': url,
+                'type': 'OpenID Specification'
+            },
+            'sections': sections,
+            'fullText': content[:10000]  # Limit full text size
+        }
+    
+    async def search_openid_specs(self, query: str, limit: int = 10, request_id: str = None, progress_callback = None) -> List[Dict[str, Any]]:
+        """Search OpenID specifications"""
+        self.logger.info(f"Searching OpenID specs for: {query}")
+        
+        try:
+            if progress_callback and request_id:
+                await progress_callback(request_id, 20, "Fetching OpenID specifications list...")
+            
+            specs_content = self.fetch_url(self.SPECS_URL)
+            
+            if progress_callback and request_id:
+                await progress_callback(request_id, 50, "Parsing specifications...")
+            
+            results = []
+            
+            # Extract links and titles from the specs page
+            link_pattern = r'<a[^>]*href=["\']([^"\']*\.html)["\'][^>]*>([^<]+)</a>'
+            links = re.findall(link_pattern, specs_content, re.IGNORECASE)
+            
+            query_lower = query.lower()
+            
+            for url, title in links:
+                title_clean = re.sub(r'<[^>]+>', '', title).strip()
+                
+                # Check if query matches title or URL
+                if (query_lower in title_clean.lower() or 
+                    query_lower in url.lower() or
+                    any(word in title_clean.lower() for word in query_lower.split() if len(word) > 2)):
+                    
+                    # Make URL absolute
+                    if url.startswith('/'):
+                        full_url = f"{self.BASE_URL}{url}"
+                    elif not url.startswith('http'):
+                        full_url = f"{self.BASE_URL}/specs/{url}"
+                    else:
+                        full_url = url
+                    
+                    results.append({
+                        'name': title_clean,
+                        'title': title_clean,
+                        'url': full_url,
+                        'type': 'OpenID Specification',
+                        'abstract': '',
+                        'authors': [],
+                        'date': ''
+                    })
+                    
+                    if len(results) >= limit:
+                        break
+            
+            if progress_callback and request_id:
+                await progress_callback(request_id, 80, f"Found {len(results)} matching specifications")
+            
+            return results
+            
+        except Exception as e:
+            self.logger.error(f"OpenID search failed: {e}")
+            return []
 
 
 class SimpleInternetDraftService:
@@ -1245,6 +1541,7 @@ class SimpleInternetDraftService:
 mcp = SimpleMCPServer("RFC and Internet Draft Server")
 rfc_service = SimpleRFCService()
 draft_service = SimpleInternetDraftService()
+openid_service = SimpleOpenIDService()
 
 
 # RFC Tools
@@ -1388,6 +1685,84 @@ async def get_internet_draft_section(name: str, section: str) -> str:
         return f'Section "{section}" not found in Internet Draft {name}'
     except Exception as e:
         return f"Error fetching section from Internet Draft {name}: {str(e)}"
+
+
+# OpenID Foundation Tools
+@mcp.tool
+async def get_openid_spec(name: str, format: str = "full", _request_id: str = None, _progress_callback = None) -> str:
+    """Fetch an OpenID Foundation specification by its name"""
+    logger.info(f"Tool call: get_openid_spec(name={name}, format={format})")
+    
+    try:
+        # Send initial progress notification
+        if _progress_callback and _request_id:
+            await _progress_callback(_request_id, 10, f"Starting to fetch OpenID spec: {name}")
+        
+        # Pass progress callback to the service
+        spec = await openid_service.fetch_openid_spec(name, _request_id, _progress_callback)
+        
+        if _progress_callback and _request_id:
+            await _progress_callback(_request_id, 90, "Processing specification content...")
+        
+        if format == "metadata":
+            result = spec["metadata"]
+        elif format == "sections":
+            result = spec["sections"]
+        else:
+            result = spec
+        
+        if _progress_callback and _request_id:
+            await _progress_callback(_request_id, 100, "OpenID specification fetch completed")
+        
+        logger.info(f"Successfully processed get_openid_spec for {name}")
+        return json.dumps(result, indent=2)
+    except Exception as e:
+        logger.error(f"Error in get_openid_spec for {name}: {str(e)}")
+        return f"Error fetching OpenID specification {name}: {str(e)}"
+
+
+@mcp.tool
+async def search_openid_specs(query: str, limit: int = 10, _request_id: str = None, _progress_callback = None) -> str:
+    """Search for OpenID Foundation specifications by keyword"""
+    logger.info(f"Tool call: search_openid_specs(query={query}, limit={limit})")
+    
+    try:
+        if _progress_callback and _request_id:
+            await _progress_callback(_request_id, 10, f"Searching OpenID specs for: {query}")
+        
+        results = await openid_service.search_openid_specs(query, limit, _request_id, _progress_callback)
+        
+        if _progress_callback and _request_id:
+            await _progress_callback(_request_id, 100, f"Found {len(results)} OpenID specifications")
+        
+        logger.info(f"Successfully processed search_openid_specs for '{query}': {len(results)} results")
+        return json.dumps(results, indent=2)
+    except Exception as e:
+        logger.error(f"Error in search_openid_specs for '{query}': {str(e)}")
+        return f"Error searching OpenID specifications for '{query}': {str(e)}"
+
+
+@mcp.tool
+async def get_openid_spec_section(name: str, section: str) -> str:
+    """Get a specific section from an OpenID Foundation specification"""
+    logger.info(f"Tool call: get_openid_spec_section(name={name}, section={section})")
+    
+    try:
+        spec = await openid_service.fetch_openid_spec(name)
+        
+        # Find matching section
+        section_query = section.lower()
+        for sect in spec["sections"]:
+            if (section_query in sect["title"].lower() or 
+                sect["title"].lower() == section_query):
+                logger.info(f"Successfully found section '{section}' in OpenID spec {name}")
+                return json.dumps(sect, indent=2)
+        
+        logger.warning(f"Section '{section}' not found in OpenID spec {name}")
+        return f'Section "{section}" not found in OpenID specification {name}'
+    except Exception as e:
+        logger.error(f"Error in get_openid_spec_section for {name}, section {section}: {str(e)}")
+        return f"Error fetching section from OpenID specification {name}: {str(e)}"
 
 
 @mcp.tool
