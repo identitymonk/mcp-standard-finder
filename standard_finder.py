@@ -213,6 +213,89 @@ class SimpleMCPServer:
                     "description": "Parameters for fetching a specific OpenID specification section"
                 }
             },
+            "summarize_internet_draft": {
+                "SummarizeInternetDraftInput": {
+                    "type": "object",
+                    "properties": {
+                        "name": {
+                            "type": "string",
+                            "description": "Internet Draft name (e.g., 'draft-ietf-wimse-s2s-protocol')"
+                        }
+                    },
+                    "required": ["name"],
+                    "description": "Parameters for summarizing an Internet Draft document"
+                }
+            },
+            "search_mail_archive": {
+                "SearchMailArchiveInput": {
+                    "type": "object",
+                    "properties": {
+                        "query": {
+                            "type": "string",
+                            "description": "Search terms (e.g., 'draft-ietf-wimse-s2s-protocol', 'OAuth security', 'TLS 1.3')"
+                        },
+                        "mailing_list": {
+                            "type": "string",
+                            "description": "Specific mailing list to search (e.g., 'oauth', 'tls', 'httpbis', 'wimse')"
+                        },
+                        "limit": {
+                            "type": "integer",
+                            "default": 20,
+                            "minimum": 1,
+                            "maximum": 50,
+                            "description": "Maximum number of results to return"
+                        }
+                    },
+                    "required": ["query"],
+                    "description": "Parameters for searching IETF mail archives"
+                }
+            },
+            "get_mail_message": {
+                "GetMailMessageInput": {
+                    "type": "object",
+                    "properties": {
+                        "message_url": {
+                            "type": "string",
+                            "description": "URL of the mail message to fetch (from search results)"
+                        }
+                    },
+                    "required": ["message_url"],
+                    "description": "Parameters for fetching a specific mail message"
+                }
+            },
+            "get_mailing_list_info": {
+                "GetMailingListInfoInput": {
+                    "type": "object",
+                    "properties": {
+                        "list_name": {
+                            "type": "string",
+                            "description": "Name of the IETF mailing list (e.g., 'oauth', 'tls', 'httpbis', 'wimse')"
+                        }
+                    },
+                    "required": ["list_name"],
+                    "description": "Parameters for getting mailing list information"
+                }
+            },
+            "search_draft_discussions": {
+                "SearchDraftDiscussionsInput": {
+                    "type": "object",
+                    "properties": {
+                        "draft_name": {
+                            "type": "string",
+                            "description": "Internet Draft name to search discussions for (e.g., 'draft-ietf-wimse-s2s-protocol')"
+                        },
+                        "limit": {
+                            "type": "integer",
+                            "default": 15,
+                            "minimum": 1,
+                            "maximum": 50,
+                            "description": "Maximum number of discussion results to return"
+                        }
+                    },
+                    "required": ["draft_name"],
+                    "description": "Parameters for searching mail archive discussions about a specific draft"
+                }
+            },
             "get_working_group_documents": {
                 "GetWorkingGroupDocumentsInput": {
                     "type": "object",
@@ -254,6 +337,40 @@ class SimpleMCPServer:
                 "description": "Default input parameters"
             }
         })
+    
+    def _match_uri_template(self, uri: str, template: str, params: dict) -> bool:
+        """Match a URI against a template and extract parameters"""
+        import re
+        
+        # Convert template to regex pattern
+        # Replace {param} with named capture groups
+        pattern = template
+        param_names = []
+        
+        # Find all {param} patterns
+        param_matches = re.findall(r'\{([^}]+)\}', template)
+        
+        for param_name in param_matches:
+            param_names.append(param_name)
+            # Replace {param} with a capture group
+            pattern = pattern.replace(f'{{{param_name}}}', f'([^/]+)')
+        
+        # Escape other regex special characters
+        pattern = pattern.replace('://', r'://')
+        
+        # Add anchors
+        pattern = f'^{pattern}$'
+        
+        try:
+            match = re.match(pattern, uri)
+            if match:
+                # Extract parameters
+                for i, param_name in enumerate(param_names):
+                    params[param_name] = match.group(i + 1)
+                return True
+            return False
+        except Exception:
+            return False
     
     async def send_progress_notification(self, request_id: str, progress: int, message: str):
         """Send progress notification to client"""
@@ -462,6 +579,86 @@ class SimpleMCPServer:
                     del response["id"]
                 
                 return response
+            
+            elif method == "resources/list":
+                # resources/list must have an ID (not a notification)
+                if is_notification:
+                    self.logger.error("resources/list request missing ID - this is invalid")
+                    return None
+                
+                resources_list = []
+                for uri_template, resource_func in self.resources.items():
+                    # Extract docstring and create resource definition
+                    doc = resource_func.__doc__ or f"Resource: {uri_template}"
+                    
+                    resources_list.append({
+                        "uri": uri_template,
+                        "name": uri_template.replace("://", "_").replace("/", "_").replace("{", "").replace("}", ""),
+                        "description": doc.split('\n')[0].strip(),
+                        "mimeType": "text/plain"
+                    })
+                
+                response = {
+                    "jsonrpc": "2.0",
+                    "id": request_id,
+                    "result": {"resources": resources_list}
+                }
+                
+                # Safety check: never send null ID
+                if response["id"] is None:
+                    self.logger.error(f"Response ID is None for {method} - this should not happen!")
+                    del response["id"]
+                
+                return response
+            
+            elif method == "resources/read":
+                # resources/read must have an ID (not a notification)
+                if is_notification:
+                    self.logger.error("resources/read request missing ID - this is invalid")
+                    return None
+                
+                uri = params.get("uri")
+                if not uri:
+                    raise Exception("Missing required parameter: uri")
+                
+                # Find matching resource by URI pattern
+                resource_func = None
+                resource_params = {}
+                
+                for uri_template, func in self.resources.items():
+                    # Simple pattern matching for resource URIs
+                    if self._match_uri_template(uri, uri_template, resource_params):
+                        resource_func = func
+                        break
+                
+                if resource_func is None:
+                    raise Exception(f"No resource found for URI: {uri}")
+                
+                # Call the resource function with extracted parameters
+                try:
+                    content = resource_func(**resource_params)
+                    
+                    response = {
+                        "jsonrpc": "2.0",
+                        "id": request_id,
+                        "result": {
+                            "contents": [{
+                                "uri": uri,
+                                "mimeType": "text/plain",
+                                "text": str(content)
+                            }]
+                        }
+                    }
+                    
+                    # Safety check: never send null ID
+                    if response["id"] is None:
+                        self.logger.error(f"Response ID is None for {method} - this should not happen!")
+                        del response["id"]
+                    
+                    return response
+                    
+                except Exception as e:
+                    raise Exception(f"Error reading resource {uri}: {str(e)}")
             
             elif method == "tools/call":
                 # tools/call must have an ID (not a notification)
@@ -725,6 +922,64 @@ class SimpleMCPServer:
                             # Debug: Log the actual JSON string being sent
                             self.logger.debug(f"JSON being sent: {response_str[:500]}...")
                             
+                            # CRITICAL: Sanitize for EOF and control characters that can cause transport closure
+                            original_size = len(response_str)
+                            
+                            # Check for and sanitize problematic characters
+                            problematic_found = []
+                            sanitized_chars = []
+                            
+                            for i, char in enumerate(response_str):
+                                char_code = ord(char)
+                                
+                                # Handle EOF and control characters that can break STDIO transport
+                                if char_code == 0:  # NULL byte - EOF indicator
+                                    problematic_found.append(f"NULL(\\x00) at pos {i}")
+                                    sanitized_chars.append('\\u0000')  # JSON escape
+                                elif char_code == 4:  # EOT (End of Transmission)
+                                    problematic_found.append(f"EOT(\\x04) at pos {i}")
+                                    sanitized_chars.append('\\u0004')
+                                elif char_code == 26:  # SUB (Substitute/EOF in some systems)
+                                    problematic_found.append(f"SUB(\\x1A) at pos {i}")
+                                    sanitized_chars.append('\\u001A')
+                                elif char_code < 32 and char not in ['\t', '\n', '\r']:
+                                    # Other control characters (except allowed whitespace)
+                                    problematic_found.append(f"CTRL(\\x{char_code:02x}) at pos {i}")
+                                    sanitized_chars.append(f'\\u{char_code:04x}')
+                                elif char_code == 127:  # DEL character
+                                    problematic_found.append(f"DEL(\\x7F) at pos {i}")
+                                    sanitized_chars.append('\\u007F')
+                                else:
+                                    sanitized_chars.append(char)
+                            
+                            if problematic_found:
+                                self.logger.warning(f"Found {len(problematic_found)} problematic characters that could cause transport closure:")
+                                for issue in problematic_found[:10]:  # Log first 10 issues
+                                    self.logger.warning(f"  {issue}")
+                                if len(problematic_found) > 10:
+                                    self.logger.warning(f"  ... and {len(problematic_found) - 10} more")
+                                
+                                # Apply sanitization
+                                response_str = ''.join(sanitized_chars)
+                                new_size = len(response_str)
+                                self.logger.info(f"Response sanitized: {original_size} → {new_size} bytes (Connection: {connection_id})")
+                            else:
+                                self.logger.debug(f"No problematic characters found in response")
+                            
+                            # Update response size after sanitization
+                            response_size = len(response_str)
+                            
+                            # CRITICAL: Ensure no embedded newlines that could break STDIO message framing
+                            newline_count = response_str.count('\n')
+                            if newline_count > 0:
+                                self.logger.warning(f"Response contains {newline_count} embedded newlines - this could break STDIO framing")
+                                # Replace embedded newlines with escaped versions
+                                response_str = response_str.replace('\n', '\\n')
+                                response_str = response_str.replace('\r', '\\r')
+                                new_size = len(response_str)
+                                self.logger.info(f"Newlines escaped: {response_size} → {new_size} bytes")
+                                response_size = new_size
+                            
                             # Final validation: ensure the JSON doesn't contain "undefined"
                             if '"undefined"' in response_str:
                                 self.logger.error(f"Response contains 'undefined' string: {response_str}")
@@ -743,6 +998,22 @@ class SimpleMCPServer:
                             # Validate the JSON can be parsed back
                             json.loads(response_str)
                             self.logger.debug(f"JSON validation passed (Connection: {connection_id})")
+                            
+                            # CRITICAL: Ensure response doesn't end with EOF-like sequences
+                            if response_str.endswith('\x00'):
+                                self.logger.warning(f"Response ends with NULL byte - removing to prevent EOF interpretation")
+                                response_str = response_str.rstrip('\x00')
+                                response_size = len(response_str)
+                            
+                            if response_str.endswith('\x04'):
+                                self.logger.warning(f"Response ends with EOT - removing to prevent EOF interpretation")
+                                response_str = response_str.rstrip('\x04')
+                                response_size = len(response_str)
+                            
+                            if response_str.endswith('\x1A'):
+                                self.logger.warning(f"Response ends with SUB - removing to prevent EOF interpretation")
+                                response_str = response_str.rstrip('\x1A')
+                                response_size = len(response_str)
                             
                         except (UnicodeDecodeError, UnicodeEncodeError) as unicode_error:
                             self.logger.error(f"Unicode encoding error in response (Connection: {connection_id}): {str(unicode_error)}")
@@ -1847,6 +2118,426 @@ class SimpleInternetDraftService:
     
     def __init__(self):
         self.logger = logging.getLogger('rfc_server.draft_service')
+
+
+class SimpleMailArchiveService:
+    """IETF Mail Archive search service for finding discussions and correspondence"""
+    
+    # IETF Mail Archive URLs
+    MAILARCHIVE_BASE = "https://mailarchive.ietf.org"
+    MAILARCHIVE_API = "https://mailarchive.ietf.org/arch/search"
+    
+    def __init__(self):
+        self.logger = logging.getLogger('rfc_server.mailarchive_service')
+    
+    def fetch_url(self, url: str, timeout: int = 30) -> str:
+        """Fetch URL content with error handling"""
+        self.logger.debug(f"Fetching URL: {url}")
+        try:
+            req = urllib.request.Request(
+                url,
+                headers={
+                    'User-Agent': 'Mozilla/5.0 (compatible; MCP-Standards-Finder/1.0)',
+                    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+                }
+            )
+            with urllib.request.urlopen(req, timeout=timeout) as response:
+                content = response.read().decode('utf-8', errors='replace')
+                self.logger.debug(f"Fetched {len(content)} bytes from {url}")
+                return content
+        except Exception as e:
+            self.logger.error(f"Failed to fetch {url}: {str(e)}")
+            raise Exception(f"Failed to fetch {url}: {str(e)}")
+    
+    async def search_mail_archive(self, query: str, mailing_list: str = None, 
+                                   limit: int = 20, date_from: str = None, 
+                                   date_to: str = None) -> List[Dict[str, Any]]:
+        """
+        Search IETF mail archives for discussions
+        
+        Note: The IETF mail archive search endpoint is protected by Cloudflare,
+        so we use the browse endpoint and filter results locally.
+        
+        Args:
+            query: Search terms (e.g., "draft-ietf-wimse-s2s-protocol", "OAuth", "security")
+            mailing_list: Specific mailing list to search (e.g., "oauth", "tls", "httpbis")
+            limit: Maximum number of results to return
+            date_from: Start date filter (YYYY-MM-DD format)
+            date_to: End date filter (YYYY-MM-DD format)
+        
+        Returns:
+            List of mail archive entries with subject, author, date, and links
+        """
+        self.logger.info(f"Searching mail archive for: {query}")
+        
+        # Since the search endpoint is protected by Cloudflare (403),
+        # we use the browse endpoint and filter results locally
+        results = await self._search_via_list_archive(query, mailing_list, limit)
+        
+        self.logger.info(f"Found {len(results)} mail archive results for: {query}")
+        
+        return results
+    
+    def _parse_search_results(self, html_content: str, limit: int) -> List[Dict[str, Any]]:
+        """Parse mail archive browse/search results from HTML
+        
+        Actual IETF mail archive HTML structure (from browse endpoint):
+        <div class="xtr">
+            <div class="xtd subj-col depth-0">
+                <span>[Subject]</span>
+                <a class="msg-detail" href="/arch/msg/list/id/">[Subject]</a>
+            </div>
+            <div class="xtd from-col">Author Name</div>
+            <div class="xtd date-col">YYYY-MM-DD</div>
+            <div class="xtd list-col d-none">listname</div>
+            ...
+        </div>
+        """
+        results = []
+        import re
+        
+        # Split by xtr rows - each row is a message
+        # Use a more robust pattern that captures the full row content
+        row_pattern = r'<div class="xtr"[^>]*>(.*?)</div>\s*<div class="xtr"'
+        rows = re.findall(row_pattern, html_content, re.DOTALL | re.IGNORECASE)
+        
+        # Also try to get the last row which won't match the pattern above
+        last_row_match = re.search(r'<div class="xtr"[^>]*>(.*?)</div>\s*</div>\s*</div>', 
+                                    html_content, re.DOTALL | re.IGNORECASE)
+        if last_row_match and last_row_match.group(1) not in rows:
+            rows.append(last_row_match.group(1))
+        
+        self.logger.debug(f"Found {len(rows)} message rows in HTML")
+        
+        for row in rows[:limit]:
+            try:
+                # Extract subject and URL from the msg-detail link
+                # Pattern: <a class="msg-detail" href="/arch/msg/list/id/">Subject</a>
+                subject_match = re.search(
+                    r'<a\s+class="msg-detail"\s+href="(/arch/msg/([^/]+)/([^/]+)/)"[^>]*>([^<]+)</a>',
+                    row, re.IGNORECASE
+                )
+                
+                if not subject_match:
+                    # Try with href before class
+                    subject_match = re.search(
+                        r'<a\s+href="(/arch/msg/([^/]+)/([^/]+)/)"\s+class="msg-detail"[^>]*>([^<]+)</a>',
+                        row, re.IGNORECASE
+                    )
+                
+                if not subject_match:
+                    # Fallback: any link to /arch/msg/
+                    subject_match = re.search(
+                        r'href="(/arch/msg/([^/]+)/([^/]+)/)"[^>]*>([^<]+)</a>',
+                        row, re.IGNORECASE
+                    )
+                
+                if subject_match:
+                    msg_url = subject_match.group(1)
+                    mailing_list = subject_match.group(2)
+                    msg_id = subject_match.group(3)
+                    subject = subject_match.group(4).strip()
+                    
+                    # Decode HTML entities
+                    subject = self._decode_html_entities(subject)
+                    
+                    # Extract author from from-col
+                    author_match = re.search(r'<div class="xtd from-col"[^>]*>([^<]+)</div>', row, re.IGNORECASE)
+                    author = author_match.group(1).strip() if author_match else "Unknown"
+                    
+                    # Extract date from date-col
+                    date_match = re.search(r'<div class="xtd date-col"[^>]*>([^<]+)</div>', row, re.IGNORECASE)
+                    date = date_match.group(1).strip() if date_match else "Unknown"
+                    
+                    results.append({
+                        "subject": subject,
+                        "author": author,
+                        "date": date,
+                        "mailing_list": mailing_list,
+                        "url": f"{self.MAILARCHIVE_BASE}{msg_url}",
+                        "message_id": msg_id
+                    })
+                    
+            except Exception as e:
+                self.logger.debug(f"Error parsing row: {e}")
+                continue
+        
+        # If xtr pattern didn't work, try simpler link-based parsing
+        if not results:
+            self.logger.debug("Falling back to simple link parsing")
+            message_pattern = r'<a[^>]*href="(/arch/msg/([^/]+)/([^/]+)/)"[^>]*>([^<]+)</a>'
+            messages = re.findall(message_pattern, html_content, re.IGNORECASE)
+            
+            for msg_url, mailing_list, msg_id, subject in messages[:limit]:
+                subject = self._decode_html_entities(subject.strip())
+                results.append({
+                    "subject": subject,
+                    "author": "Unknown",
+                    "date": "Unknown",
+                    "mailing_list": mailing_list,
+                    "url": f"{self.MAILARCHIVE_BASE}{msg_url}",
+                    "message_id": msg_id
+                })
+        
+        self.logger.info(f"Parsed {len(results)} messages from HTML")
+        return results
+    
+    def _decode_html_entities(self, text: str) -> str:
+        """Decode common HTML entities"""
+        replacements = {
+            '&#x27;': "'",
+            '&amp;': '&',
+            '&lt;': '<',
+            '&gt;': '>',
+            '&quot;': '"',
+            '&#39;': "'",
+            '&nbsp;': ' ',
+        }
+        for entity, char in replacements.items():
+            text = text.replace(entity, char)
+        return text
+    
+    async def _search_via_list_archive(self, query: str, mailing_list: str = None, 
+                                        limit: int = 20) -> List[Dict[str, Any]]:
+        """Alternative search via specific mailing list archives"""
+        results = []
+        
+        # If a specific list is provided, search that list's archive
+        if mailing_list:
+            lists_to_search = [mailing_list]
+        else:
+            # Search common IETF working group lists based on query
+            lists_to_search = self._guess_relevant_lists(query)
+        
+        for list_name in lists_to_search[:3]:  # Limit to 3 lists
+            try:
+                list_url = f"{self.MAILARCHIVE_BASE}/arch/browse/{list_name}/"
+                html_content = self.fetch_url(list_url)
+                
+                # Parse recent messages from the list
+                list_results = self._parse_list_archive(html_content, list_name, query, limit // len(lists_to_search))
+                results.extend(list_results)
+                
+            except Exception as e:
+                self.logger.debug(f"Failed to search list {list_name}: {e}")
+                continue
+        
+        return results[:limit]
+    
+    def _guess_relevant_lists(self, query: str) -> List[str]:
+        """Guess relevant mailing lists based on query terms"""
+        query_lower = query.lower()
+        
+        # Map common terms to mailing lists
+        list_mappings = {
+            'oauth': ['oauth', 'ace'],
+            'http': ['httpbis', 'httpapi'],
+            'tls': ['tls', 'uta'],
+            'dns': ['dnsop', 'dprive'],
+            'security': ['saag', 'secdispatch'],
+            'jwt': ['oauth', 'jose'],
+            'jose': ['jose', 'oauth'],
+            'wimse': ['wimse', 'oauth', 'spice'],
+            'spice': ['spice', 'wimse'],
+            'workload': ['wimse', 'spice'],
+            'identity': ['wimse', 'oauth', 'spice'],
+            'quic': ['quic'],
+            'websocket': ['hybi'],
+            'json': ['json', 'httpapi'],
+            'api': ['httpapi', 'oauth'],
+            'token': ['oauth', 'ace'],
+            'authentication': ['oauth', 'saag'],
+            'authorization': ['oauth', 'ace'],
+        }
+        
+        relevant_lists = []
+        for term, lists in list_mappings.items():
+            if term in query_lower:
+                for lst in lists:
+                    if lst not in relevant_lists:
+                        relevant_lists.append(lst)
+        
+        # Default to general lists if no specific match
+        if not relevant_lists:
+            relevant_lists = ['ietf', 'last-call']
+        
+        return relevant_lists
+    
+    def _parse_list_archive(self, html_content: str, list_name: str, 
+                            query: str, limit: int) -> List[Dict[str, Any]]:
+        """Parse a mailing list archive page for relevant messages
+        
+        Uses the same xtr/xtd structure as _parse_search_results since
+        the browse endpoint returns the same HTML format.
+        """
+        import re
+        
+        query_terms = [term.lower() for term in query.split()]
+        
+        # First, try to parse using the full xtr/xtd structure to get author and date
+        all_messages = self._parse_search_results(html_content, limit * 2)  # Get more to filter
+        
+        # Filter by query terms
+        results = []
+        for msg in all_messages:
+            subject_lower = msg["subject"].lower()
+            # Check if any query term appears in the subject
+            if any(term in subject_lower for term in query_terms):
+                results.append(msg)
+                if len(results) >= limit:
+                    break
+        
+        # If no results from structured parsing, fall back to simple link parsing
+        if not results:
+            self.logger.debug(f"Falling back to simple link parsing for {list_name}")
+            msg_pattern = r'<a[^>]*href="(/arch/msg/' + re.escape(list_name) + r'/([^/]+)/)"[^>]*>([^<]+)</a>'
+            messages = re.findall(msg_pattern, html_content, re.IGNORECASE)
+            
+            for msg_url, msg_id, subject in messages:
+                subject_lower = subject.lower()
+                if any(term in subject_lower for term in query_terms):
+                    results.append({
+                        "subject": self._decode_html_entities(subject.strip()),
+                        "author": "Unknown",
+                        "date": "Unknown",
+                        "mailing_list": list_name,
+                        "url": f"{self.MAILARCHIVE_BASE}{msg_url}",
+                        "message_id": msg_id
+                    })
+                    if len(results) >= limit:
+                        break
+        
+        return results
+    
+    async def get_message(self, message_url: str) -> Dict[str, Any]:
+        """Fetch a specific mail message by URL"""
+        self.logger.info(f"Fetching message: {message_url}")
+        
+        try:
+            # Ensure URL is complete
+            if not message_url.startswith('http'):
+                message_url = f"{self.MAILARCHIVE_BASE}{message_url}"
+            
+            html_content = self.fetch_url(message_url)
+            
+            # Parse the message content
+            message = self._parse_message(html_content, message_url)
+            
+            return message
+            
+        except Exception as e:
+            self.logger.error(f"Failed to fetch message: {str(e)}")
+            raise Exception(f"Failed to fetch message: {str(e)}")
+    
+    def _parse_message(self, html_content: str, url: str) -> Dict[str, Any]:
+        """Parse a mail message page - updated for actual IETF mail archive structure"""
+        import re
+        
+        message = {
+            "url": url,
+            "subject": "Unknown",
+            "author": "Unknown",
+            "date": "Unknown",
+            "mailing_list": "Unknown",
+            "content": "",
+            "in_reply_to": None,
+            "references": []
+        }
+        
+        # Extract subject from <h3> tag in msg-body
+        subject_match = re.search(r'<div id="msg-body"[^>]*>.*?<h3>([^<]+)</h3>', html_content, re.DOTALL | re.IGNORECASE)
+        if subject_match:
+            message["subject"] = subject_match.group(1).strip()
+        else:
+            # Fallback to title tag
+            title_match = re.search(r'<title>([^<]+)</title>', html_content, re.IGNORECASE)
+            if title_match:
+                message["subject"] = title_match.group(1).strip()
+        
+        # Extract author from msg-from span
+        # Format: <span id="msg-from" class="pipe">Author Name &lt;email@example.com&gt;</span>
+        from_match = re.search(r'<span id="msg-from"[^>]*>([^<]+)</span>', html_content, re.IGNORECASE)
+        if from_match:
+            author = from_match.group(1).strip()
+            # Decode HTML entities
+            author = author.replace('&lt;', '<').replace('&gt;', '>').replace('&amp;', '&')
+            message["author"] = author
+        
+        # Extract date from msg-date span
+        # Format: <span id="msg-date" class="pipe">Sun, 11 January 2026 07:45 UTC</span>
+        date_match = re.search(r'<span id="msg-date"[^>]*>([^<]+)</span>', html_content, re.IGNORECASE)
+        if date_match:
+            message["date"] = date_match.group(1).strip()
+        
+        # Extract mailing list from URL
+        list_match = re.search(r'/arch/msg/([^/]+)/', url)
+        if list_match:
+            message["mailing_list"] = list_match.group(1)
+        
+        # Extract message body from msg-body div
+        # The body content is typically after the msg-header div
+        body_match = re.search(r'<div id="msg-header"[^>]*>.*?</div>\s*<pre[^>]*>(.*?)</pre>', 
+                               html_content, re.DOTALL | re.IGNORECASE)
+        if body_match:
+            body = body_match.group(1)
+            # Clean HTML tags
+            body = re.sub(r'<[^>]+>', '', body)
+            # Decode HTML entities
+            body = body.replace('&lt;', '<').replace('&gt;', '>').replace('&amp;', '&').replace('&quot;', '"').replace('&#x27;', "'")
+            message["content"] = body.strip()
+        else:
+            # Try alternative pattern - look for any pre tag after msg-body
+            body_match = re.search(r'<div id="msg-body"[^>]*>.*?<pre[^>]*>(.*?)</pre>', 
+                                   html_content, re.DOTALL | re.IGNORECASE)
+            if body_match:
+                body = body_match.group(1)
+                body = re.sub(r'<[^>]+>', '', body)
+                body = body.replace('&lt;', '<').replace('&gt;', '>').replace('&amp;', '&').replace('&quot;', '"')
+                message["content"] = body.strip()
+        
+        # Extract In-Reply-To from headers
+        reply_match = re.search(r'In-Reply-To:\s*&lt;([^&]+)&gt;|In-Reply-To:\s*<([^>]+)>', html_content, re.IGNORECASE)
+        if reply_match:
+            message["in_reply_to"] = (reply_match.group(1) or reply_match.group(2) or "").strip()
+        
+        return message
+    
+    async def get_list_info(self, list_name: str) -> Dict[str, Any]:
+        """Get information about a mailing list"""
+        self.logger.info(f"Getting info for mailing list: {list_name}")
+        
+        try:
+            list_url = f"{self.MAILARCHIVE_BASE}/arch/browse/{list_name}/"
+            html_content = self.fetch_url(list_url)
+            
+            info = {
+                "name": list_name,
+                "url": list_url,
+                "description": "",
+                "recent_threads": []
+            }
+            
+            # Extract description if available
+            import re
+            desc_match = re.search(r'<p[^>]*class="[^"]*description[^"]*"[^>]*>([^<]+)</p>', html_content, re.IGNORECASE)
+            if desc_match:
+                info["description"] = desc_match.group(1).strip()
+            
+            # Extract recent thread subjects
+            thread_pattern = r'<a[^>]*href="(/arch/msg/' + re.escape(list_name) + r'/[^"]+)"[^>]*>([^<]+)</a>'
+            threads = re.findall(thread_pattern, html_content, re.IGNORECASE)
+            
+            for thread_url, subject in threads[:10]:
+                info["recent_threads"].append({
+                    "subject": subject.strip(),
+                    "url": f"{self.MAILARCHIVE_BASE}{thread_url}"
+                })
+            
+            return info
+            
+        except Exception as e:
+            self.logger.error(f"Failed to get list info: {str(e)}")
+            raise Exception(f"Failed to get list info for {list_name}: {str(e)}")
     
     def fetch_url(self, url: str) -> str:
         """Fetch content from URL"""
@@ -2457,6 +3148,7 @@ mcp = SimpleMCPServer("RFC and Internet Draft Server")
 rfc_service = SimpleRFCService()
 draft_service = SimpleInternetDraftService()
 openid_service = SimpleOpenIDService()
+mailarchive_service = SimpleMailArchiveService()
 
 
 # RFC Tools
@@ -2681,6 +3373,76 @@ async def get_openid_spec_section(name: str, section: str) -> str:
 
 
 @mcp.tool
+async def summarize_internet_draft(name: str) -> str:
+    """Summarize an Internet Draft document with key information"""
+    logger.info(f"Tool call: summarize_internet_draft(name={name})")
+    
+    try:
+        # Fetch the draft metadata and content
+        draft = await draft_service.fetch_internet_draft(name)
+        
+        # Extract key information for summary
+        metadata = draft.get("metadata", {})
+        content = draft.get("content", "")
+        sections = draft.get("sections", [])
+        
+        summary = {
+            "document": name,
+            "title": metadata.get("title", "Unknown"),
+            "authors": metadata.get("authors", []),
+            "date": metadata.get("date", "Unknown"),
+            "status": metadata.get("status", "Unknown"),
+            "abstract": metadata.get("abstract", "No abstract available"),
+            "workgroup": metadata.get("workgroup", "Unknown"),
+            "category": metadata.get("category", "Unknown"),
+            "expires": metadata.get("expires", "Unknown"),
+            "section_count": len(sections),
+            "sections": [{"number": s.get("number", ""), "title": s.get("title", "")} for s in sections[:10]],  # First 10 sections
+            "content_length": len(content),
+            "key_topics": extract_key_topics(content, sections),
+            "summary_generated": datetime.now().isoformat()
+        }
+        
+        logger.info(f"Successfully generated summary for {name}")
+        return json.dumps(summary, indent=2)
+        
+    except Exception as e:
+        logger.error(f"Error summarizing Internet Draft {name}: {str(e)}")
+        return f"Error summarizing Internet Draft {name}: {str(e)}"
+
+def extract_key_topics(content: str, sections: list) -> list:
+    """Extract key topics from draft content"""
+    topics = []
+    
+    # Look for key terms in section titles
+    key_terms = [
+        "security", "authentication", "authorization", "protocol", "implementation",
+        "requirements", "architecture", "framework", "mechanism", "procedure",
+        "identity", "token", "credential", "workload", "service", "server",
+        "client", "api", "interface", "specification", "standard"
+    ]
+    
+    for section in sections:
+        title = section.get("title", "").lower()
+        for term in key_terms:
+            if term in title and term not in topics:
+                topics.append(term)
+    
+    # Look for acronyms and technical terms in content (first 5000 chars)
+    import re
+    content_sample = content[:5000].upper()
+    
+    # Common protocol/security acronyms
+    acronyms = re.findall(r'\b[A-Z]{2,6}\b', content_sample)
+    common_acronyms = ["HTTP", "HTTPS", "TLS", "SSL", "JWT", "OAUTH", "OIDC", "API", "JSON", "XML", "SAML", "PKCE", "MTLS"]
+    
+    for acronym in set(acronyms):
+        if acronym in common_acronyms and acronym.lower() not in topics:
+            topics.append(acronym.lower())
+    
+    return topics[:15]  # Limit to 15 key topics
+
+@mcp.tool
 async def get_working_group_documents(working_group: str, include_rfcs: bool = True, include_drafts: bool = True, limit: int = 50) -> str:
     """Get all active RFCs and Internet Drafts for a specific IETF working group"""
     logger.info(f"Tool call: get_working_group_documents(working_group={working_group}, include_rfcs={include_rfcs}, include_drafts={include_drafts}, limit={limit})")
@@ -2693,6 +3455,101 @@ async def get_working_group_documents(working_group: str, include_rfcs: bool = T
     except Exception as e:
         logger.error(f"Error in get_working_group_documents for {working_group}: {str(e)}")
         return f"Error fetching documents for working group {working_group}: {str(e)}"
+
+
+# Mail Archive Tools
+@mcp.tool
+async def search_mail_archive(query: str, mailing_list: str = None, limit: int = 20) -> str:
+    """Search IETF mail archives for discussions and correspondence related to RFCs, drafts, or topics"""
+    logger.info(f"Tool call: search_mail_archive(query={query}, mailing_list={mailing_list}, limit={limit})")
+    
+    try:
+        results = await mailarchive_service.search_mail_archive(query, mailing_list, limit)
+        
+        response = {
+            "query": query,
+            "mailing_list": mailing_list or "all",
+            "result_count": len(results),
+            "results": results
+        }
+        
+        logger.info(f"Successfully searched mail archive for '{query}': {len(results)} results")
+        return json.dumps(response, indent=2)
+    except Exception as e:
+        logger.error(f"Error searching mail archive for '{query}': {str(e)}")
+        return f"Error searching mail archive: {str(e)}"
+
+
+@mcp.tool
+async def get_mail_message(message_url: str) -> str:
+    """Fetch a specific mail message from the IETF mail archive by URL"""
+    logger.info(f"Tool call: get_mail_message(message_url={message_url})")
+    
+    try:
+        message = await mailarchive_service.get_message(message_url)
+        
+        logger.info(f"Successfully fetched mail message: {message.get('subject', 'Unknown')}")
+        return json.dumps(message, indent=2)
+    except Exception as e:
+        logger.error(f"Error fetching mail message: {str(e)}")
+        return f"Error fetching mail message: {str(e)}"
+
+
+@mcp.tool
+async def get_mailing_list_info(list_name: str) -> str:
+    """Get information about an IETF mailing list including recent threads"""
+    logger.info(f"Tool call: get_mailing_list_info(list_name={list_name})")
+    
+    try:
+        info = await mailarchive_service.get_list_info(list_name)
+        
+        logger.info(f"Successfully fetched info for mailing list: {list_name}")
+        return json.dumps(info, indent=2)
+    except Exception as e:
+        logger.error(f"Error fetching mailing list info for '{list_name}': {str(e)}")
+        return f"Error fetching mailing list info: {str(e)}"
+
+
+@mcp.tool
+async def search_draft_discussions(draft_name: str, limit: int = 15) -> str:
+    """Search for mail archive discussions specifically about an Internet Draft"""
+    logger.info(f"Tool call: search_draft_discussions(draft_name={draft_name}, limit={limit})")
+    
+    try:
+        # Extract working group from draft name if possible
+        mailing_list = None
+        if draft_name.startswith('draft-ietf-'):
+            parts = draft_name.split('-')
+            if len(parts) >= 3:
+                mailing_list = parts[2]  # e.g., 'wimse' from 'draft-ietf-wimse-s2s-protocol'
+        
+        # Search for the draft name in mail archives
+        results = await mailarchive_service.search_mail_archive(draft_name, mailing_list, limit)
+        
+        # Also search for common variations
+        if len(results) < limit:
+            # Try without version number
+            base_name = draft_name.rstrip('0123456789').rstrip('-')
+            if base_name != draft_name:
+                additional = await mailarchive_service.search_mail_archive(base_name, mailing_list, limit - len(results))
+                # Add unique results
+                existing_urls = {r['url'] for r in results}
+                for r in additional:
+                    if r['url'] not in existing_urls:
+                        results.append(r)
+        
+        response = {
+            "draft_name": draft_name,
+            "mailing_list": mailing_list or "auto-detected",
+            "result_count": len(results),
+            "discussions": results
+        }
+        
+        logger.info(f"Successfully searched discussions for draft '{draft_name}': {len(results)} results")
+        return json.dumps(response, indent=2)
+    except Exception as e:
+        logger.error(f"Error searching discussions for draft '{draft_name}': {str(e)}")
+        return f"Error searching draft discussions: {str(e)}"
 
 
 def main():

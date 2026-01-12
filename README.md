@@ -35,6 +35,15 @@ A comprehensive Python MCP server for fetching, parsing, and reading RFCs and In
 - **Flexible Filtering** - Choose to include/exclude RFCs or drafts, set limits per type
 - **Popular Working Groups** - Tested with httpbis, oauth, tls, quic, dnsop, and more
 
+### Mail Archive Support
+- **Search Mail Archives** - Search IETF mailing list archives for discussions and correspondence
+- **Draft Discussions** - Find mail threads discussing specific Internet Drafts
+- **Mailing List Info** - Get information about IETF mailing lists and recent threads
+- **Message Retrieval** - Fetch full content of specific mail messages
+- **Auto-Detection** - Automatically identifies relevant mailing lists based on draft names
+- **Popular Lists** - Supports oauth, tls, httpbis, wimse, spice, quic, and many more
+- **Browse-Based Search** - Uses the browse endpoint to avoid Cloudflare protection on search
+
 ### General Features
 - **Smart Caching** - Improves performance for repeated requests
 - **Comprehensive Metadata** - Extracts authors, dates, status, abstracts, and more
@@ -311,6 +320,75 @@ await mcp.call_tool('get_openid_spec_section', {
     'name': 'openid-connect-core',
     'section': 'Authentication'
 })
+```
+
+### Mail Archive Tools
+
+#### search_mail_archive
+
+Search IETF mail archives for discussions and correspondence.
+
+**Parameters:**
+- `query` (string, required): Search terms (e.g., 'draft-ietf-wimse-s2s-protocol', 'OAuth security')
+- `mailing_list` (string, optional): Specific mailing list to search (e.g., 'oauth', 'tls', 'wimse')
+- `limit` (integer, optional): Maximum number of results (default: 20)
+
+**Examples:**
+```python
+# Search for discussions about a specific draft
+await mcp.call_tool('search_mail_archive', {'query': 'draft-ietf-wimse-s2s-protocol'})
+
+# Search in a specific mailing list
+await mcp.call_tool('search_mail_archive', {'query': 'token binding', 'mailing_list': 'oauth'})
+
+# Search with limit
+await mcp.call_tool('search_mail_archive', {'query': 'TLS 1.3 security', 'limit': 10})
+```
+
+#### search_draft_discussions
+
+Search for mail archive discussions specifically about an Internet Draft.
+
+**Parameters:**
+- `draft_name` (string, required): Internet Draft name (e.g., 'draft-ietf-wimse-s2s-protocol')
+- `limit` (integer, optional): Maximum number of results (default: 15)
+
+**Examples:**
+```python
+# Find discussions about WIMSE S2S protocol
+await mcp.call_tool('search_draft_discussions', {'draft_name': 'draft-ietf-wimse-s2s-protocol'})
+
+# Find OAuth draft discussions
+await mcp.call_tool('search_draft_discussions', {'draft_name': 'draft-ietf-oauth-selective-disclosure-jwt', 'limit': 20})
+```
+
+#### get_mail_message
+
+Fetch a specific mail message from the IETF mail archive.
+
+**Parameters:**
+- `message_url` (string, required): URL of the mail message (from search results)
+
+**Examples:**
+```python
+# Fetch a specific message
+await mcp.call_tool('get_mail_message', {'message_url': 'https://mailarchive.ietf.org/arch/msg/oauth/abc123'})
+```
+
+#### get_mailing_list_info
+
+Get information about an IETF mailing list including recent threads.
+
+**Parameters:**
+- `list_name` (string, required): Name of the mailing list (e.g., 'oauth', 'tls', 'wimse')
+
+**Examples:**
+```python
+# Get info about the OAuth mailing list
+await mcp.call_tool('get_mailing_list_info', {'list_name': 'oauth'})
+
+# Get info about the WIMSE mailing list
+await mcp.call_tool('get_mailing_list_info', {'list_name': 'wimse'})
 ```
 
 ## Available Resources

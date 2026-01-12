@@ -1,0 +1,808 @@
+<!DOCTYPE html> 
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Search IETF mail list archives">
+    <title>wimse</title>
+
+    
+
+    <link rel="stylesheet" type="text/css" href="https://static.ietf.org/mailarchive/2.36.0/fontawesome/css/all.css">
+    <link rel="stylesheet" type="text/css" href="https://static.ietf.org/mailarchive/2.36.0/mlarchive/css/bootstrap_custom.css">
+    <link rel="stylesheet" type="text/css" href="https://static.ietf.org/mailarchive/2.36.0/mlarchive/css/styles.css">
+
+    
+
+    
+
+</head>
+
+<body>
+
+<!-- Container -->
+<div id="container">
+
+    <header class="navbar navbar-expand-md navbar-dark fixed-top px-3 py-0">
+        <div class="container-fluid">
+            <a class="navbar-brand p-0" href="/">
+                <img alt="IETF Logo" src="https://static.ietf.org/mailarchive/2.36.0/mlarchive/images/ietflogo-small-transparent.png">
+                <span class="navbar-text d-none d-md-inline-block">
+                
+                Mail Archive
+                
+                </span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar-main" aria-controls="navbar-main" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            
+            <div id="navbar-main" class="navbar-header collapse navbar-collapse">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item d-none d-lg-inline">
+                        <a class="nav-link" href="https://www.ietf.org/search/">Search www.ietf.org</a>
+                    </li>
+                    <li class="nav-item d-none d-lg-inline">
+                        <a class="nav-link" href="https://datatracker.ietf.org">Search Datatracker</a>
+                    </li>
+		            <li class="nav-item d-none d-lg-inline navbar-text pipe"></li>
+
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbar-help" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Help</a>
+                        <div class="dropdown-menu" aria-labelledby="navbar-help">
+                            <a class="dropdown-item" href="/arch/help/">Search Syntax</a>
+                            <a class="dropdown-item" href="/docs/api-reference/">API Reference</a>
+                        </div>
+                    </li>
+
+                    
+                    
+                    
+                    
+                    
+                    <li class="nav-item dropdown me-2">
+                        <a id="nav-settings-anchor" class="nav-link dropdown-toggle" href="#" id="navbar-settings" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Settings</a>
+                        <ul class="dropdown-menu" aria-labelledby="navbar-settings">
+                            <li><a id="toggle-static" class="dropdown-item" href="#">Turn Static Mode On</a></li>
+                        </ul>
+                    </li>
+                    
+
+                    
+                    <li class="nav-item">
+                        
+                            <a class="nav-link" href="/oidc/authenticate/" rel="nofollow">Sign in</a>
+                        
+                    </li>
+                    
+                </ul>
+            </div> <!-- navbar-header -->
+            
+        </div> <!-- container-fluid -->
+    </header>
+
+            <!-- 
+            <noscript>
+                <p class="navbar-text"><small>Enable Javascript for full functionality.</small></p>
+            </noscript>
+            -->
+
+        <!-- Django Messages -->
+        
+
+
+    <!-- Content -->
+    <div id="content">
+        
+
+    <div id="msg-container">
+        <div id="sidebar">
+            <div id="search-filters">
+                
+                    <p class="text-center">Viewing List:<br><span class="browse-list-name"><b>wimse</b></span></p>
+                    <hr>
+                
+                <h5 class="mt-4">FILTER BY TIME</h5>
+                <ul class="filter-options" tabindex="-1">
+                  <li class="filter-item"><a class="selected" href="?">Anytime</a></li>
+                  <li class="filter-item"><a class="None" href="?qdr=d">Past day</a></li>
+                  <li class="filter-item"><a class="None" href="?qdr=w">Past week</a></li>
+                  <li class="filter-item"><a class="None" href="?qdr=m">Past month</a></li>
+                  <li class="filter-item"><a class="None" href="?qdr=y">Past year</a></li>
+                </ul>
+                <div id="filter-box" class="js-off">
+                    
+
+                    <h5 class="mt-4">FILTER BY FROM</h5>
+                    <div id="from-filter" class="filter" tabindex="-1">
+                        <form id="from-filter-form">
+                        <ul class="filter-options" tabindex="-1">
+                         
+                        </ul>
+                        </form>
+                    </div> <!-- from-filter -->
+                </div> <!-- filter-box -->
+            </div> <!-- search-filters -->
+            
+            <div id="message">
+              
+            </div>
+            
+            
+  <div class="footer">
+      <p class="small text-center">v2.36.0 | <a href="https://github.com/ietf-tools/mailarch/issues">Report a Bug</a> | <a href="mailto:tools-help@ietf.org">By Email</a> | <a href="https://status.ietf.org">System Status</a></p>
+  </div>
+
+
+        </div> <!-- sidebar -->
+
+        <div id="msg-components">
+        
+            <nav id="toolbar-left" class="navbar navbar-light bg-light rounded shadow-sm float-start toolbar">
+              <ul class="navbar-nav me-auto">
+                <li id="toggle-filters" class="nav-item">
+                  <a href="#" class="nav-link"><i class="fa fa-chevron-left toggle-pane" aria-hidden="true"></i></a>
+                </li>
+              </ul>
+            </nav>
+
+            <nav id="toolbar" class="navbar navbar-expand-md navbar-light bg-light rounded shadow-sm toolbar">
+                <div class="container-fluid">
+                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#myNavbar" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+
+                    <div class="collapse navbar-collapse justify-content-stretch" id="myNavbar">
+                        <ul class="navbar-nav mx-2 flex-shrink-0">
+                            
+                            <!-- <li><a id="clear-sort" href="#">Clear Sort</a></li> -->
+                            
+                                <li class="nav-item"><a class="nav-link active" href="/arch/browse/wimse/?">Date</a></li>
+                                <li class="nav-item"><a id="gbt-link" class="nav-link" href="/arch/browse/wimse/?gbt=1">Thread</a></li>
+                            
+                        </ul>
+                        
+                        <form name="search-form" id="id_search_form" class="ms-3 my-auto flex-grow-1" method="get">
+                            <div class="input-group input-group-sm w-100">
+                                
+                                    <input type="search" name="q" spellcheck="false" placeholder="Search wimse" class="form-control" id="id_q" value="">
+                                
+                                <div class="input-group-append">
+                                    <button class="btn btn-secondary" type="submit">
+                                        <span class="fa fa-search" aria-hidden="true"></span>
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+
+                        <ul class="navbar-nav">
+                            <li class="nav-item"><a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#export-modal">Export</a></li>
+                        </ul> <!-- nav navbar-nav -->
+
+                    </div> <!-- myNavbar -->
+                </div> <!-- container-fluid -->
+            </nav> <!-- toolbar -->
+    
+            
+            <div id="msg-panes">
+                <div id="list-pane">
+                    
+                    
+                        <div class="header sortable">
+                            <a id="sort-button-subject" class="unsorted sortbutton" href="#">Subject<i class="fa fa-sort" aria-hidden="true"></i></a>
+                        </div><div class="header sortable">
+                            <a id="sort-button-frm" class="unsorted sortbutton" href="#">From<i class="fa fa-sort" aria-hidden="true"></i></a>
+                        </div><div class="header sortable">
+                            <a id="sort-button-date" class="unsorted sortbutton" href="#">Date<i class="fa fa-sort" aria-hidden="true"></i></a>
+                        </div><div class="header sortable d-none">
+                            <a id="sort-button-email_list" class="unsorted sortbutton" href="#">List<i class="fa fa-sort" aria-hidden="true"></i></a>
+                        </div>
+                    
+
+                    <div id="msg-list" class="msg-list wrapper no-preview" tabindex="-1" data-results-per-page="" data-queryid="" data-queryset-offset="0" data-selected-offset="None" data-export-token="RR5RHtK9jdQyLHLk" data-browse-list="wimse" data-gbt="" data-static-off-url="/arch/browse/wimse/" data-static-on-url="/arch/browse/static/wimse/">
+                        <div class="table msg-table xtable">
+                            <div class="xtbody">
+                                
+                                    
+
+    <div class="xtr">
+        <div class="xtd subj-col depth-0">
+            <span>[WIMSE] Weekly github digest (WIMSE Weekly GitHub Activity Summary)</span><a class="msg-detail" href="/arch/msg/wimse/-J0hObxEsnthGXQuYA-aG8So3WM/">[WIMSE] Weekly github digest (WIMSE Weekly GitHub Activity Summary)</a>
+        </div>
+        <div class="xtd from-col">Repository Activity Summary Bot</div>
+        <div class="xtd date-col">2026-01-11</div>
+        <div class="xtd list-col d-none">wimse</div>
+        <div class="xtd score-col d-none"></div>
+        <div class="xtd url-col d-none">/arch/msg/wimse/-J0hObxEsnthGXQuYA-aG8So3WM/</div>
+        <div class="xtd id-col d-none">3691922</div>
+        <div class="xtd thread-col d-none">2229407</div>
+    </div>
+
+    <div class="xtr">
+        <div class="xtd subj-col depth-6">
+            <span>[WIMSE] Re: [Rats] Re: [Seat] Re: Re: Follow-up of meeting 122 presentation (Formal proof of insecurity of Intel&#x27;s RA-TLS and draft-fossati-tls-attestation)</span><a class="msg-detail" href="/arch/msg/wimse/xoGA0MOANO9lxe8oLymurwJtddw/">[WIMSE] Re: [Rats] Re: [Seat] Re: Re: Follow-up of meeting 122 presentation (Formal proof of insecurity of Intel&#x27;s RA-TLS and draft-fossati-tls-attestation)</a>
+        </div>
+        <div class="xtd from-col">Kathleen Moriarty</div>
+        <div class="xtd date-col">2026-01-10</div>
+        <div class="xtd list-col d-none">wimse</div>
+        <div class="xtd score-col d-none"></div>
+        <div class="xtd url-col d-none">/arch/msg/wimse/xoGA0MOANO9lxe8oLymurwJtddw/</div>
+        <div class="xtd id-col d-none">3691848</div>
+        <div class="xtd thread-col d-none">2227535</div>
+    </div>
+
+    <div class="xtr">
+        <div class="xtd subj-col depth-6">
+            <span>[WIMSE] Re: [Rats] Re: [Seat] Re: Re: Follow-up of meeting 122 presentation (Formal proof of insecurity of Intel&#x27;s RA-TLS and draft-fossati-tls-attestation)</span><a class="msg-detail" href="/arch/msg/wimse/Nv6TkMdqkwz8hVL7mnIrlR_m_zU/">[WIMSE] Re: [Rats] Re: [Seat] Re: Re: Follow-up of meeting 122 presentation (Formal proof of insecurity of Intel&#x27;s RA-TLS and draft-fossati-tls-attestation)</a>
+        </div>
+        <div class="xtd from-col">Mandyam, Giridhar</div>
+        <div class="xtd date-col">2026-01-10</div>
+        <div class="xtd list-col d-none">wimse</div>
+        <div class="xtd score-col d-none"></div>
+        <div class="xtd url-col d-none">/arch/msg/wimse/Nv6TkMdqkwz8hVL7mnIrlR_m_zU/</div>
+        <div class="xtd id-col d-none">3691847</div>
+        <div class="xtd thread-col d-none">2227535</div>
+    </div>
+
+    <div class="xtr">
+        <div class="xtd subj-col depth-6">
+            <span>[WIMSE] Re: [Rats] Re: [Seat] Re: Re: Follow-up of meeting 122 presentation (Formal proof of insecurity of Intel&#x27;s RA-TLS and draft-fossati-tls-attestation)</span><a class="msg-detail" href="/arch/msg/wimse/DrPuxC_wYxUeos86yQoR0h0hoFY/">[WIMSE] Re: [Rats] Re: [Seat] Re: Re: Follow-up of meeting 122 presentation (Formal proof of insecurity of Intel&#x27;s RA-TLS and draft-fossati-tls-attestation)</a>
+        </div>
+        <div class="xtd from-col">Manu Fontaine</div>
+        <div class="xtd date-col">2026-01-10</div>
+        <div class="xtd list-col d-none">wimse</div>
+        <div class="xtd score-col d-none"></div>
+        <div class="xtd url-col d-none">/arch/msg/wimse/DrPuxC_wYxUeos86yQoR0h0hoFY/</div>
+        <div class="xtd id-col d-none">3691846</div>
+        <div class="xtd thread-col d-none">2227535</div>
+    </div>
+
+    <div class="xtr">
+        <div class="xtd subj-col depth-6">
+            <span>[WIMSE] Re: [Rats] Re: [Seat] Re: Re: Follow-up of meeting 122 presentation (Formal proof of insecurity of Intel&#x27;s RA-TLS and draft-fossati-tls-attestation)</span><a class="msg-detail" href="/arch/msg/wimse/SC1_qZFQyge5T9NBWosDQQVyblQ/">[WIMSE] Re: [Rats] Re: [Seat] Re: Re: Follow-up of meeting 122 presentation (Formal proof of insecurity of Intel&#x27;s RA-TLS and draft-fossati-tls-attestation)</a>
+        </div>
+        <div class="xtd from-col">Nathanael Ritz</div>
+        <div class="xtd date-col">2026-01-09</div>
+        <div class="xtd list-col d-none">wimse</div>
+        <div class="xtd score-col d-none"></div>
+        <div class="xtd url-col d-none">/arch/msg/wimse/SC1_qZFQyge5T9NBWosDQQVyblQ/</div>
+        <div class="xtd id-col d-none">3691845</div>
+        <div class="xtd thread-col d-none">2227535</div>
+    </div>
+
+    <div class="xtr">
+        <div class="xtd subj-col depth-6">
+            <span>[WIMSE] Re: [Rats] Re: [Seat] Re: Re: Follow-up of meeting 122 presentation (Formal proof of insecurity of Intel&#x27;s RA-TLS and draft-fossati-tls-attestation)</span><a class="msg-detail" href="/arch/msg/wimse/YMh0YFhascfzfrYLisgotl27-aE/">[WIMSE] Re: [Rats] Re: [Seat] Re: Re: Follow-up of meeting 122 presentation (Formal proof of insecurity of Intel&#x27;s RA-TLS and draft-fossati-tls-attestation)</a>
+        </div>
+        <div class="xtd from-col">Manu Fontaine</div>
+        <div class="xtd date-col">2026-01-09</div>
+        <div class="xtd list-col d-none">wimse</div>
+        <div class="xtd score-col d-none"></div>
+        <div class="xtd url-col d-none">/arch/msg/wimse/YMh0YFhascfzfrYLisgotl27-aE/</div>
+        <div class="xtd id-col d-none">3691844</div>
+        <div class="xtd thread-col d-none">2227535</div>
+    </div>
+
+    <div class="xtr">
+        <div class="xtd subj-col depth-6">
+            <span>[WIMSE] Re: [Rats] [Seat] Re: Re: Follow-up of meeting 122 presentation (Formal proof of insecurity of Intel&#x27;s RA-TLS and draft-fossati-tls-attestation)</span><a class="msg-detail" href="/arch/msg/wimse/vpR5lLrohAMi4-72Q6HhiRFkM6I/">[WIMSE] Re: [Rats] [Seat] Re: Re: Follow-up of meeting 122 presentation (Formal proof of insecurity of Intel&#x27;s RA-TLS and draft-fossati-tls-attestation)</a>
+        </div>
+        <div class="xtd from-col">John Kemp</div>
+        <div class="xtd date-col">2026-01-09</div>
+        <div class="xtd list-col d-none">wimse</div>
+        <div class="xtd score-col d-none"></div>
+        <div class="xtd url-col d-none">/arch/msg/wimse/vpR5lLrohAMi4-72Q6HhiRFkM6I/</div>
+        <div class="xtd id-col d-none">3691843</div>
+        <div class="xtd thread-col d-none">2227535</div>
+    </div>
+
+    <div class="xtr">
+        <div class="xtd subj-col depth-6">
+            <span>[WIMSE] Re: [Rats] [Seat] Re: Re: Follow-up of meeting 122 presentation (Formal proof of insecurity of Intel&#x27;s RA-TLS and draft-fossati-tls-attestation)</span><a class="msg-detail" href="/arch/msg/wimse/PjGD-jT91OG4tMxAnvC8vk5PxHs/">[WIMSE] Re: [Rats] [Seat] Re: Re: Follow-up of meeting 122 presentation (Formal proof of insecurity of Intel&#x27;s RA-TLS and draft-fossati-tls-attestation)</a>
+        </div>
+        <div class="xtd from-col">Muhammad Usama Sardar</div>
+        <div class="xtd date-col">2026-01-09</div>
+        <div class="xtd list-col d-none">wimse</div>
+        <div class="xtd score-col d-none"></div>
+        <div class="xtd url-col d-none">/arch/msg/wimse/PjGD-jT91OG4tMxAnvC8vk5PxHs/</div>
+        <div class="xtd id-col d-none">3691842</div>
+        <div class="xtd thread-col d-none">2227535</div>
+    </div>
+
+    <div class="xtr">
+        <div class="xtd subj-col depth-6">
+            <span>[WIMSE] Re: [Rats] [Seat] Re: Re: Follow-up of meeting 122 presentation (Formal proof of insecurity of Intel&#x27;s RA-TLS and draft-fossati-tls-attestation)</span><a class="msg-detail" href="/arch/msg/wimse/pqeNO6RcU3Cpu5UNaOUOxfXgFlU/">[WIMSE] Re: [Rats] [Seat] Re: Re: Follow-up of meeting 122 presentation (Formal proof of insecurity of Intel&#x27;s RA-TLS and draft-fossati-tls-attestation)</a>
+        </div>
+        <div class="xtd from-col">Muhammad Usama Sardar</div>
+        <div class="xtd date-col">2026-01-09</div>
+        <div class="xtd list-col d-none">wimse</div>
+        <div class="xtd score-col d-none"></div>
+        <div class="xtd url-col d-none">/arch/msg/wimse/pqeNO6RcU3Cpu5UNaOUOxfXgFlU/</div>
+        <div class="xtd id-col d-none">3691841</div>
+        <div class="xtd thread-col d-none">2227535</div>
+    </div>
+
+    <div class="xtr">
+        <div class="xtd subj-col depth-6">
+            <span>[WIMSE] Re: [Rats] [Seat] Re: Re: Follow-up of meeting 122 presentation (Formal proof of insecurity of Intel&#x27;s RA-TLS and draft-fossati-tls-attestation)</span><a class="msg-detail" href="/arch/msg/wimse/S4Tth7UtEZogVGOOU18YxF0fY38/">[WIMSE] Re: [Rats] [Seat] Re: Re: Follow-up of meeting 122 presentation (Formal proof of insecurity of Intel&#x27;s RA-TLS and draft-fossati-tls-attestation)</a>
+        </div>
+        <div class="xtd from-col">Kathleen Moriarty</div>
+        <div class="xtd date-col">2026-01-09</div>
+        <div class="xtd list-col d-none">wimse</div>
+        <div class="xtd score-col d-none"></div>
+        <div class="xtd url-col d-none">/arch/msg/wimse/S4Tth7UtEZogVGOOU18YxF0fY38/</div>
+        <div class="xtd id-col d-none">3691840</div>
+        <div class="xtd thread-col d-none">2227535</div>
+    </div>
+
+    <div class="xtr">
+        <div class="xtd subj-col depth-6">
+            <span>[WIMSE] Re: [Rats] [Seat] Re: Re: Follow-up of meeting 122 presentation (Formal proof of insecurity of Intel&#x27;s RA-TLS and draft-fossati-tls-attestation)</span><a class="msg-detail" href="/arch/msg/wimse/UUIAY_ye-fgE_VklOmZXefy8pYM/">[WIMSE] Re: [Rats] [Seat] Re: Re: Follow-up of meeting 122 presentation (Formal proof of insecurity of Intel&#x27;s RA-TLS and draft-fossati-tls-attestation)</a>
+        </div>
+        <div class="xtd from-col">Justin Richer</div>
+        <div class="xtd date-col">2026-01-09</div>
+        <div class="xtd list-col d-none">wimse</div>
+        <div class="xtd score-col d-none"></div>
+        <div class="xtd url-col d-none">/arch/msg/wimse/UUIAY_ye-fgE_VklOmZXefy8pYM/</div>
+        <div class="xtd id-col d-none">3691617</div>
+        <div class="xtd thread-col d-none">2227535</div>
+    </div>
+
+    <div class="xtr">
+        <div class="xtd subj-col depth-6">
+            <span>[WIMSE] Re: [Rats] Re: [Seat] Re: Re: Follow-up of meeting 122 presentation (Formal proof of insecurity of Intel&#x27;s RA-TLS and draft-fossati-tls-attestation)</span><a class="msg-detail" href="/arch/msg/wimse/-r4diowELmJJ9OvWkQt0gCnQrpQ/">[WIMSE] Re: [Rats] Re: [Seat] Re: Re: Follow-up of meeting 122 presentation (Formal proof of insecurity of Intel&#x27;s RA-TLS and draft-fossati-tls-attestation)</a>
+        </div>
+        <div class="xtd from-col">Muhammad Usama Sardar</div>
+        <div class="xtd date-col">2026-01-08</div>
+        <div class="xtd list-col d-none">wimse</div>
+        <div class="xtd score-col d-none"></div>
+        <div class="xtd url-col d-none">/arch/msg/wimse/-r4diowELmJJ9OvWkQt0gCnQrpQ/</div>
+        <div class="xtd id-col d-none">3691615</div>
+        <div class="xtd thread-col d-none">2227535</div>
+    </div>
+
+    <div class="xtr">
+        <div class="xtd subj-col depth-6">
+            <span>[WIMSE] Re: [Rats] Re: [Seat] Re: Re: Follow-up of meeting 122 presentation (Formal proof of insecurity of Intel&#x27;s RA-TLS and draft-fossati-tls-attestation)</span><a class="msg-detail" href="/arch/msg/wimse/8PNiV_39V94qzK0ywlY2BsLzPCc/">[WIMSE] Re: [Rats] Re: [Seat] Re: Re: Follow-up of meeting 122 presentation (Formal proof of insecurity of Intel&#x27;s RA-TLS and draft-fossati-tls-attestation)</a>
+        </div>
+        <div class="xtd from-col">Kathleen Moriarty</div>
+        <div class="xtd date-col">2026-01-08</div>
+        <div class="xtd list-col d-none">wimse</div>
+        <div class="xtd score-col d-none"></div>
+        <div class="xtd url-col d-none">/arch/msg/wimse/8PNiV_39V94qzK0ywlY2BsLzPCc/</div>
+        <div class="xtd id-col d-none">3691219</div>
+        <div class="xtd thread-col d-none">2227535</div>
+    </div>
+
+    <div class="xtr">
+        <div class="xtd subj-col depth-6">
+            <span>[WIMSE] Re: [Seat] Re: Re: Follow-up of meeting 122 presentation (Formal proof of insecurity of Intel&#x27;s RA-TLS and draft-fossati-tls-attestation)</span><a class="msg-detail" href="/arch/msg/wimse/tA_lVf8k20GV14opMtif9wlRdfY/">[WIMSE] Re: [Seat] Re: Re: Follow-up of meeting 122 presentation (Formal proof of insecurity of Intel&#x27;s RA-TLS and draft-fossati-tls-attestation)</a>
+        </div>
+        <div class="xtd from-col">Henk Birkholz</div>
+        <div class="xtd date-col">2026-01-08</div>
+        <div class="xtd list-col d-none">wimse</div>
+        <div class="xtd score-col d-none"></div>
+        <div class="xtd url-col d-none">/arch/msg/wimse/tA_lVf8k20GV14opMtif9wlRdfY/</div>
+        <div class="xtd id-col d-none">3691156</div>
+        <div class="xtd thread-col d-none">2227535</div>
+    </div>
+
+    <div class="xtr">
+        <div class="xtd subj-col depth-1">
+            <span>[WIMSE] Re: I-D Action: draft-ietf-wimse-http-signature-01.txt</span><a class="msg-detail" href="/arch/msg/wimse/gou8xR5dB_lN78Zp5IFVS_Bgv98/">[WIMSE] Re: I-D Action: draft-ietf-wimse-http-signature-01.txt</a>
+        </div>
+        <div class="xtd from-col">Yaron Sheffer</div>
+        <div class="xtd date-col">2026-01-08</div>
+        <div class="xtd list-col d-none">wimse</div>
+        <div class="xtd score-col d-none"></div>
+        <div class="xtd url-col d-none">/arch/msg/wimse/gou8xR5dB_lN78Zp5IFVS_Bgv98/</div>
+        <div class="xtd id-col d-none">3691026</div>
+        <div class="xtd thread-col d-none">2229030</div>
+    </div>
+
+    <div class="xtr">
+        <div class="xtd subj-col depth-1">
+            <span>[WIMSE] I-D Action: draft-ietf-wimse-http-signature-01.txt</span><a class="msg-detail" href="/arch/msg/wimse/Ho0x9WdzAsO84feYsSqOpM2J0ns/">[WIMSE] I-D Action: draft-ietf-wimse-http-signature-01.txt</a>
+        </div>
+        <div class="xtd from-col">internet-drafts</div>
+        <div class="xtd date-col">2026-01-08</div>
+        <div class="xtd list-col d-none">wimse</div>
+        <div class="xtd score-col d-none"></div>
+        <div class="xtd url-col d-none">/arch/msg/wimse/Ho0x9WdzAsO84feYsSqOpM2J0ns/</div>
+        <div class="xtd id-col d-none">3691022</div>
+        <div class="xtd thread-col d-none">2229030</div>
+    </div>
+
+    <div class="xtr">
+        <div class="xtd subj-col depth-6">
+            <span>[WIMSE] Re: Follow-up of meeting 122 presentation (Formal proof of insecurity of Intel&#x27;s RA-TLS and draft-fossati-tls-attestation)</span><a class="msg-detail" href="/arch/msg/wimse/jwsu2W_Pocr-ty3whjyDhj3y3VE/">[WIMSE] Re: Follow-up of meeting 122 presentation (Formal proof of insecurity of Intel&#x27;s RA-TLS and draft-fossati-tls-attestation)</a>
+        </div>
+        <div class="xtd from-col">Muhammad Usama Sardar</div>
+        <div class="xtd date-col">2026-01-06</div>
+        <div class="xtd list-col d-none">wimse</div>
+        <div class="xtd score-col d-none"></div>
+        <div class="xtd url-col d-none">/arch/msg/wimse/jwsu2W_Pocr-ty3whjyDhj3y3VE/</div>
+        <div class="xtd id-col d-none">3690309</div>
+        <div class="xtd thread-col d-none">2227535</div>
+    </div>
+
+    <div class="xtr">
+        <div class="xtd subj-col depth-6">
+            <span>[WIMSE] Re: Follow-up of meeting 122 presentation (Formal proof of insecurity of Intel&#x27;s RA-TLS and draft-fossati-tls-attestation)</span><a class="msg-detail" href="/arch/msg/wimse/UTNTRyCq6ElmGDrinCZ_zjHwiEw/">[WIMSE] Re: Follow-up of meeting 122 presentation (Formal proof of insecurity of Intel&#x27;s RA-TLS and draft-fossati-tls-attestation)</a>
+        </div>
+        <div class="xtd from-col">Pieter Kasselman</div>
+        <div class="xtd date-col">2026-01-06</div>
+        <div class="xtd list-col d-none">wimse</div>
+        <div class="xtd score-col d-none"></div>
+        <div class="xtd url-col d-none">/arch/msg/wimse/UTNTRyCq6ElmGDrinCZ_zjHwiEw/</div>
+        <div class="xtd id-col d-none">3690276</div>
+        <div class="xtd thread-col d-none">2227535</div>
+    </div>
+
+    <div class="xtr">
+        <div class="xtd subj-col depth-6">
+            <span>[WIMSE] Re: [Seat] Re: Re: Follow-up of meeting 122 presentation (Formal proof of insecurity of Intel&#x27;s RA-TLS and draft-fossati-tls-attestation)</span><a class="msg-detail" href="/arch/msg/wimse/npu9zS0VDg1TRpoIOC-opscoxUY/">[WIMSE] Re: [Seat] Re: Re: Follow-up of meeting 122 presentation (Formal proof of insecurity of Intel&#x27;s RA-TLS and draft-fossati-tls-attestation)</a>
+        </div>
+        <div class="xtd from-col">Muhammad Usama Sardar</div>
+        <div class="xtd date-col">2026-01-06</div>
+        <div class="xtd list-col d-none">wimse</div>
+        <div class="xtd score-col d-none"></div>
+        <div class="xtd url-col d-none">/arch/msg/wimse/npu9zS0VDg1TRpoIOC-opscoxUY/</div>
+        <div class="xtd id-col d-none">3690227</div>
+        <div class="xtd thread-col d-none">2227535</div>
+    </div>
+
+    <div class="xtr">
+        <div class="xtd subj-col depth-6">
+            <span>[WIMSE] Re: Follow-up of meeting 122 presentation (Formal proof of insecurity of Intel&#x27;s RA-TLS and draft-fossati-tls-attestation)</span><a class="msg-detail" href="/arch/msg/wimse/I1mJH6C1YCZ3ouJ2FfGFjRsn0FE/">[WIMSE] Re: Follow-up of meeting 122 presentation (Formal proof of insecurity of Intel&#x27;s RA-TLS and draft-fossati-tls-attestation)</a>
+        </div>
+        <div class="xtd from-col">Justin Richer</div>
+        <div class="xtd date-col">2026-01-06</div>
+        <div class="xtd list-col d-none">wimse</div>
+        <div class="xtd score-col d-none"></div>
+        <div class="xtd url-col d-none">/arch/msg/wimse/I1mJH6C1YCZ3ouJ2FfGFjRsn0FE/</div>
+        <div class="xtd id-col d-none">3690224</div>
+        <div class="xtd thread-col d-none">2227535</div>
+    </div>
+
+    <div class="xtr">
+        <div class="xtd subj-col depth-6">
+            <span>[WIMSE] Re: [Seat] Re: Re: Follow-up of meeting 122 presentation (Formal proof of insecurity of Intel&#x27;s RA-TLS and draft-fossati-tls-attestation)</span><a class="msg-detail" href="/arch/msg/wimse/dLFujnhrhppQ68eMwqvSjr65FKA/">[WIMSE] Re: [Seat] Re: Re: Follow-up of meeting 122 presentation (Formal proof of insecurity of Intel&#x27;s RA-TLS and draft-fossati-tls-attestation)</a>
+        </div>
+        <div class="xtd from-col">Yaron Sheffer</div>
+        <div class="xtd date-col">2026-01-06</div>
+        <div class="xtd list-col d-none">wimse</div>
+        <div class="xtd score-col d-none"></div>
+        <div class="xtd url-col d-none">/arch/msg/wimse/dLFujnhrhppQ68eMwqvSjr65FKA/</div>
+        <div class="xtd id-col d-none">3690209</div>
+        <div class="xtd thread-col d-none">2227535</div>
+    </div>
+
+    <div class="xtr">
+        <div class="xtd subj-col depth-6">
+            <span>[WIMSE] Re: Follow-up of meeting 122 presentation (Formal proof of insecurity of Intel&#x27;s RA-TLS and draft-fossati-tls-attestation)</span><a class="msg-detail" href="/arch/msg/wimse/I0YgR9AzKcA0zF_kG7Q6mWCc9ZY/">[WIMSE] Re: Follow-up of meeting 122 presentation (Formal proof of insecurity of Intel&#x27;s RA-TLS and draft-fossati-tls-attestation)</a>
+        </div>
+        <div class="xtd from-col">Muhammad Usama Sardar</div>
+        <div class="xtd date-col">2026-01-06</div>
+        <div class="xtd list-col d-none">wimse</div>
+        <div class="xtd score-col d-none"></div>
+        <div class="xtd url-col d-none">/arch/msg/wimse/I0YgR9AzKcA0zF_kG7Q6mWCc9ZY/</div>
+        <div class="xtd id-col d-none">3690119</div>
+        <div class="xtd thread-col d-none">2227535</div>
+    </div>
+
+    <div class="xtr">
+        <div class="xtd subj-col depth-6">
+            <span>[WIMSE] Re: Follow-up of meeting 122 presentation (Formal proof of insecurity of Intel&#x27;s RA-TLS and draft-fossati-tls-attestation)</span><a class="msg-detail" href="/arch/msg/wimse/s53UGGY7gwmHMLWJCIcQFeEDHFY/">[WIMSE] Re: Follow-up of meeting 122 presentation (Formal proof of insecurity of Intel&#x27;s RA-TLS and draft-fossati-tls-attestation)</a>
+        </div>
+        <div class="xtd from-col">Arndt Schwenkschuster</div>
+        <div class="xtd date-col">2026-01-06</div>
+        <div class="xtd list-col d-none">wimse</div>
+        <div class="xtd score-col d-none"></div>
+        <div class="xtd url-col d-none">/arch/msg/wimse/s53UGGY7gwmHMLWJCIcQFeEDHFY/</div>
+        <div class="xtd id-col d-none">3690117</div>
+        <div class="xtd thread-col d-none">2227535</div>
+    </div>
+
+    <div class="xtr">
+        <div class="xtd subj-col depth-6">
+            <span>[WIMSE] Re: Follow-up of meeting 122 presentation (Formal proof of insecurity of Intel&#x27;s RA-TLS and draft-fossati-tls-attestation)</span><a class="msg-detail" href="/arch/msg/wimse/gQsGLkw59Zsuj7TG7Phej6U-lfQ/">[WIMSE] Re: Follow-up of meeting 122 presentation (Formal proof of insecurity of Intel&#x27;s RA-TLS and draft-fossati-tls-attestation)</a>
+        </div>
+        <div class="xtd from-col">Muhammad Usama Sardar</div>
+        <div class="xtd date-col">2026-01-06</div>
+        <div class="xtd list-col d-none">wimse</div>
+        <div class="xtd score-col d-none"></div>
+        <div class="xtd url-col d-none">/arch/msg/wimse/gQsGLkw59Zsuj7TG7Phej6U-lfQ/</div>
+        <div class="xtd id-col d-none">3690108</div>
+        <div class="xtd thread-col d-none">2227535</div>
+    </div>
+
+    <div class="xtr">
+        <div class="xtd subj-col depth-6">
+            <span>[WIMSE] Re: Follow-up of meeting 122 presentation (Formal proof of insecurity of Intel&#x27;s RA-TLS and draft-fossati-tls-attestation)</span><a class="msg-detail" href="/arch/msg/wimse/UbvU9TOFv76bgth65K5DXC_D0-A/">[WIMSE] Re: Follow-up of meeting 122 presentation (Formal proof of insecurity of Intel&#x27;s RA-TLS and draft-fossati-tls-attestation)</a>
+        </div>
+        <div class="xtd from-col">John Kemp</div>
+        <div class="xtd date-col">2026-01-06</div>
+        <div class="xtd list-col d-none">wimse</div>
+        <div class="xtd score-col d-none"></div>
+        <div class="xtd url-col d-none">/arch/msg/wimse/UbvU9TOFv76bgth65K5DXC_D0-A/</div>
+        <div class="xtd id-col d-none">3690089</div>
+        <div class="xtd thread-col d-none">2227535</div>
+    </div>
+
+    <div class="xtr">
+        <div class="xtd subj-col depth-6">
+            <span>[WIMSE] Re: Follow-up of meeting 122 presentation (Formal proof of insecurity of Intel&#x27;s RA-TLS and draft-fossati-tls-attestation)</span><a class="msg-detail" href="/arch/msg/wimse/XQScfvDncpv4bEZwJQujrkd52Xw/">[WIMSE] Re: Follow-up of meeting 122 presentation (Formal proof of insecurity of Intel&#x27;s RA-TLS and draft-fossati-tls-attestation)</a>
+        </div>
+        <div class="xtd from-col">Justin Richer</div>
+        <div class="xtd date-col">2026-01-06</div>
+        <div class="xtd list-col d-none">wimse</div>
+        <div class="xtd score-col d-none"></div>
+        <div class="xtd url-col d-none">/arch/msg/wimse/XQScfvDncpv4bEZwJQujrkd52Xw/</div>
+        <div class="xtd id-col d-none">3690086</div>
+        <div class="xtd thread-col d-none">2227535</div>
+    </div>
+
+    <div class="xtr">
+        <div class="xtd subj-col depth-6">
+            <span>[WIMSE] Re: Follow-up of meeting 122 presentation (Formal proof of insecurity of Intel&#x27;s RA-TLS and draft-fossati-tls-attestation)</span><a class="msg-detail" href="/arch/msg/wimse/YIH64L3KpUELxc1b-1GmvBAoMOM/">[WIMSE] Re: Follow-up of meeting 122 presentation (Formal proof of insecurity of Intel&#x27;s RA-TLS and draft-fossati-tls-attestation)</a>
+        </div>
+        <div class="xtd from-col">Pieter Kasselman</div>
+        <div class="xtd date-col">2026-01-06</div>
+        <div class="xtd list-col d-none">wimse</div>
+        <div class="xtd score-col d-none"></div>
+        <div class="xtd url-col d-none">/arch/msg/wimse/YIH64L3KpUELxc1b-1GmvBAoMOM/</div>
+        <div class="xtd id-col d-none">3690080</div>
+        <div class="xtd thread-col d-none">2227535</div>
+    </div>
+
+    <div class="xtr">
+        <div class="xtd subj-col depth-6">
+            <span>[WIMSE] Re: Follow-up of meeting 122 presentation (Formal proof of insecurity of Intel&#x27;s RA-TLS and draft-fossati-tls-attestation)</span><a class="msg-detail" href="/arch/msg/wimse/dCC24YzRwMWSOP5UtB9-iQd4CqU/">[WIMSE] Re: Follow-up of meeting 122 presentation (Formal proof of insecurity of Intel&#x27;s RA-TLS and draft-fossati-tls-attestation)</a>
+        </div>
+        <div class="xtd from-col">Muhammad Usama Sardar</div>
+        <div class="xtd date-col">2026-01-06</div>
+        <div class="xtd list-col d-none">wimse</div>
+        <div class="xtd score-col d-none"></div>
+        <div class="xtd url-col d-none">/arch/msg/wimse/dCC24YzRwMWSOP5UtB9-iQd4CqU/</div>
+        <div class="xtd id-col d-none">3689898</div>
+        <div class="xtd thread-col d-none">2227535</div>
+    </div>
+
+    <div class="xtr">
+        <div class="xtd subj-col depth-6">
+            <span>[WIMSE] Re: Follow-up of meeting 122 presentation (Formal proof of insecurity of Intel&#x27;s RA-TLS and draft-fossati-tls-attestation)</span><a class="msg-detail" href="/arch/msg/wimse/w6msRmNPstlLbye8-D3X-SWKMYs/">[WIMSE] Re: Follow-up of meeting 122 presentation (Formal proof of insecurity of Intel&#x27;s RA-TLS and draft-fossati-tls-attestation)</a>
+        </div>
+        <div class="xtd from-col">Justin Richer</div>
+        <div class="xtd date-col">2026-01-05</div>
+        <div class="xtd list-col d-none">wimse</div>
+        <div class="xtd score-col d-none"></div>
+        <div class="xtd url-col d-none">/arch/msg/wimse/w6msRmNPstlLbye8-D3X-SWKMYs/</div>
+        <div class="xtd id-col d-none">3689804</div>
+        <div class="xtd thread-col d-none">2227535</div>
+    </div>
+
+    <div class="xtr">
+        <div class="xtd subj-col depth-0">
+            <span>[WIMSE] Weekly github digest (WIMSE Weekly GitHub Activity Summary)</span><a class="msg-detail" href="/arch/msg/wimse/_g4IK9LPiZPycA267g4aBaYWwtg/">[WIMSE] Weekly github digest (WIMSE Weekly GitHub Activity Summary)</a>
+        </div>
+        <div class="xtd from-col">Repository Activity Summary Bot</div>
+        <div class="xtd date-col">2026-01-04</div>
+        <div class="xtd list-col d-none">wimse</div>
+        <div class="xtd score-col d-none"></div>
+        <div class="xtd url-col d-none">/arch/msg/wimse/_g4IK9LPiZPycA267g4aBaYWwtg/</div>
+        <div class="xtd id-col d-none">3689206</div>
+        <div class="xtd thread-col d-none">2228165</div>
+    </div>
+
+    <div class="xtr">
+        <div class="xtd subj-col depth-6">
+            <span>[WIMSE] Re: Follow-up of meeting 122 presentation (Formal proof of insecurity of Intel&#x27;s RA-TLS and draft-fossati-tls-attestation)</span><a class="msg-detail" href="/arch/msg/wimse/dX_2NBEeUamWfCgw9UuFHg6LstQ/">[WIMSE] Re: Follow-up of meeting 122 presentation (Formal proof of insecurity of Intel&#x27;s RA-TLS and draft-fossati-tls-attestation)</a>
+        </div>
+        <div class="xtd from-col">Muhammad Usama Sardar</div>
+        <div class="xtd date-col">2025-12-31</div>
+        <div class="xtd list-col d-none">wimse</div>
+        <div class="xtd score-col d-none"></div>
+        <div class="xtd url-col d-none">/arch/msg/wimse/dX_2NBEeUamWfCgw9UuFHg6LstQ/</div>
+        <div class="xtd id-col d-none">3688690</div>
+        <div class="xtd thread-col d-none">2227535</div>
+    </div>
+
+    <div class="xtr">
+        <div class="xtd subj-col depth-6">
+            <span>[WIMSE] Re: Follow-up of meeting 122 presentation (Formal proof of insecurity of Intel&#x27;s RA-TLS and draft-fossati-tls-attestation)</span><a class="msg-detail" href="/arch/msg/wimse/uYuHijWQOclDTkNhaBK8f2L3ZeI/">[WIMSE] Re: Follow-up of meeting 122 presentation (Formal proof of insecurity of Intel&#x27;s RA-TLS and draft-fossati-tls-attestation)</a>
+        </div>
+        <div class="xtd from-col">John Kemp</div>
+        <div class="xtd date-col">2025-12-31</div>
+        <div class="xtd list-col d-none">wimse</div>
+        <div class="xtd score-col d-none"></div>
+        <div class="xtd url-col d-none">/arch/msg/wimse/uYuHijWQOclDTkNhaBK8f2L3ZeI/</div>
+        <div class="xtd id-col d-none">3688687</div>
+        <div class="xtd thread-col d-none">2227535</div>
+    </div>
+
+    <div class="xtr">
+        <div class="xtd subj-col depth-6">
+            <span>[WIMSE] Re: Follow-up of meeting 122 presentation (Formal proof of insecurity of Intel&#x27;s RA-TLS and draft-fossati-tls-attestation)</span><a class="msg-detail" href="/arch/msg/wimse/Vx8EPhjoiqSNv7LP5_iG0zptxU8/">[WIMSE] Re: Follow-up of meeting 122 presentation (Formal proof of insecurity of Intel&#x27;s RA-TLS and draft-fossati-tls-attestation)</a>
+        </div>
+        <div class="xtd from-col">Muhammad Usama Sardar</div>
+        <div class="xtd date-col">2025-12-31</div>
+        <div class="xtd list-col d-none">wimse</div>
+        <div class="xtd score-col d-none"></div>
+        <div class="xtd url-col d-none">/arch/msg/wimse/Vx8EPhjoiqSNv7LP5_iG0zptxU8/</div>
+        <div class="xtd id-col d-none">3688677</div>
+        <div class="xtd thread-col d-none">2227535</div>
+    </div>
+
+    <div class="xtr">
+        <div class="xtd subj-col depth-6">
+            <span>[WIMSE] Re: Follow-up of meeting 122 presentation (Formal proof of insecurity of Intel&#x27;s RA-TLS and draft-fossati-tls-attestation)</span><a class="msg-detail" href="/arch/msg/wimse/gyDiZDMusZPeaxdNFXWzezYwu00/">[WIMSE] Re: Follow-up of meeting 122 presentation (Formal proof of insecurity of Intel&#x27;s RA-TLS and draft-fossati-tls-attestation)</a>
+        </div>
+        <div class="xtd from-col">John Kemp</div>
+        <div class="xtd date-col">2025-12-30</div>
+        <div class="xtd list-col d-none">wimse</div>
+        <div class="xtd score-col d-none"></div>
+        <div class="xtd url-col d-none">/arch/msg/wimse/gyDiZDMusZPeaxdNFXWzezYwu00/</div>
+        <div class="xtd id-col d-none">3688613</div>
+        <div class="xtd thread-col d-none">2227535</div>
+    </div>
+
+    <div class="xtr">
+        <div class="xtd subj-col depth-6">
+            <span>[WIMSE] Re: Follow-up of meeting 122 presentation (Formal proof of insecurity of Intel&#x27;s RA-TLS and draft-fossati-tls-attestation)</span><a class="msg-detail" href="/arch/msg/wimse/SYU0Q9BKQQP9TfQnJ-U-mrMqjqw/">[WIMSE] Re: Follow-up of meeting 122 presentation (Formal proof of insecurity of Intel&#x27;s RA-TLS and draft-fossati-tls-attestation)</a>
+        </div>
+        <div class="xtd from-col">Muhammad Usama Sardar</div>
+        <div class="xtd date-col">2025-12-30</div>
+        <div class="xtd list-col d-none">wimse</div>
+        <div class="xtd score-col d-none"></div>
+        <div class="xtd url-col d-none">/arch/msg/wimse/SYU0Q9BKQQP9TfQnJ-U-mrMqjqw/</div>
+        <div class="xtd id-col d-none">3688572</div>
+        <div class="xtd thread-col d-none">2227535</div>
+    </div>
+
+    <div class="xtr">
+        <div class="xtd subj-col depth-6">
+            <span>[WIMSE] Re: Follow-up of meeting 122 presentation (Formal proof of insecurity of Intel&#x27;s RA-TLS and draft-fossati-tls-attestation)</span><a class="msg-detail" href="/arch/msg/wimse/_nqW1u3dBSYYHZ58LktbBem1xDI/">[WIMSE] Re: Follow-up of meeting 122 presentation (Formal proof of insecurity of Intel&#x27;s RA-TLS and draft-fossati-tls-attestation)</a>
+        </div>
+        <div class="xtd from-col">John Kemp</div>
+        <div class="xtd date-col">2025-12-30</div>
+        <div class="xtd list-col d-none">wimse</div>
+        <div class="xtd score-col d-none"></div>
+        <div class="xtd url-col d-none">/arch/msg/wimse/_nqW1u3dBSYYHZ58LktbBem1xDI/</div>
+        <div class="xtd id-col d-none">3688567</div>
+        <div class="xtd thread-col d-none">2227535</div>
+    </div>
+
+    <div class="xtr">
+        <div class="xtd subj-col depth-6">
+            <span>[WIMSE] Re: Follow-up of meeting 122 presentation (Formal proof of insecurity of Intel&#x27;s RA-TLS and draft-fossati-tls-attestation)</span><a class="msg-detail" href="/arch/msg/wimse/dmYuqRxpuY31XBMJwB0jsma74jU/">[WIMSE] Re: Follow-up of meeting 122 presentation (Formal proof of insecurity of Intel&#x27;s RA-TLS and draft-fossati-tls-attestation)</a>
+        </div>
+        <div class="xtd from-col">Muhammad Usama Sardar</div>
+        <div class="xtd date-col">2025-12-30</div>
+        <div class="xtd list-col d-none">wimse</div>
+        <div class="xtd score-col d-none"></div>
+        <div class="xtd url-col d-none">/arch/msg/wimse/dmYuqRxpuY31XBMJwB0jsma74jU/</div>
+        <div class="xtd id-col d-none">3688565</div>
+        <div class="xtd thread-col d-none">2227535</div>
+    </div>
+
+    <div class="xtr">
+        <div class="xtd subj-col depth-6">
+            <span>[WIMSE] Re: Follow-up of meeting 122 presentation (Formal proof of insecurity of Intel&#x27;s RA-TLS and draft-fossati-tls-attestation)</span><a class="msg-detail" href="/arch/msg/wimse/j6qxEyBhgJOeuOHIJbvx_VrvvsA/">[WIMSE] Re: Follow-up of meeting 122 presentation (Formal proof of insecurity of Intel&#x27;s RA-TLS and draft-fossati-tls-attestation)</a>
+        </div>
+        <div class="xtd from-col">John Kemp</div>
+        <div class="xtd date-col">2025-12-30</div>
+        <div class="xtd list-col d-none">wimse</div>
+        <div class="xtd score-col d-none"></div>
+        <div class="xtd url-col d-none">/arch/msg/wimse/j6qxEyBhgJOeuOHIJbvx_VrvvsA/</div>
+        <div class="xtd id-col d-none">3688547</div>
+        <div class="xtd thread-col d-none">2227535</div>
+    </div>
+
+    <div class="xtr">
+        <div class="xtd subj-col depth-6">
+            <span>[WIMSE] Re: Follow-up of meeting 122 presentation (Formal proof of insecurity of Intel&#x27;s RA-TLS and draft-fossati-tls-attestation)</span><a class="msg-detail" href="/arch/msg/wimse/37nx_2rFpWucneqQfd-aRQEEjI8/">[WIMSE] Re: Follow-up of meeting 122 presentation (Formal proof of insecurity of Intel&#x27;s RA-TLS and draft-fossati-tls-attestation)</a>
+        </div>
+        <div class="xtd from-col">Muhammad Usama Sardar</div>
+        <div class="xtd date-col">2025-12-30</div>
+        <div class="xtd list-col d-none">wimse</div>
+        <div class="xtd score-col d-none"></div>
+        <div class="xtd url-col d-none">/arch/msg/wimse/37nx_2rFpWucneqQfd-aRQEEjI8/</div>
+        <div class="xtd id-col d-none">3688527</div>
+        <div class="xtd thread-col d-none">2227535</div>
+    </div>
+
+    <div class="xtr">
+        <div class="xtd subj-col depth-5">
+            <span>[WIMSE] Re: Follow-up of meeting 122 presentation (Formal proof of insecurity of Intel&#x27;s RA-TLS and draft-fossati-tls-attestation)</span><a class="msg-detail" href="/arch/msg/wimse/C6ARkcXvVdgyJKuxoqYuSHp4nYE/">[WIMSE] Re: Follow-up of meeting 122 presentation (Formal proof of insecurity of Intel&#x27;s RA-TLS and draft-fossati-tls-attestation)</a>
+        </div>
+        <div class="xtd from-col">Sorin Dumitru</div>
+        <div class="xtd date-col">2025-12-30</div>
+        <div class="xtd list-col d-none">wimse</div>
+        <div class="xtd score-col d-none"></div>
+        <div class="xtd url-col d-none">/arch/msg/wimse/C6ARkcXvVdgyJKuxoqYuSHp4nYE/</div>
+        <div class="xtd id-col d-none">3688515</div>
+        <div class="xtd thread-col d-none">2227535</div>
+    </div>
+
+                                
+                            </div>
+                        </div> <!-- msg-table -->
+                    </div> <!-- msg-list -->
+
+                    <div id="msg-list-controls">
+                        <div id="message-count" class="list-control">1106 Messages</div>
+                        <div class="progress">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated w-100" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                        <div class="list-control page-nav">
+                            
+                            <span class="current-page">Page 1 of 28</span>
+                            <a class="float-end" href="/arch/browse/wimse/?page=2">Next</a>
+                        </div>
+                        <div id="toggle-preview"><a href="#"><i class="fa fa-chevron-down toggle-pane" aria-hidden="true"></i></a></div>
+                    </div> <!-- msg-list-controls -->
+                </div> <!-- list-pane -->
+                
+                <div id="splitter-pane" class="draggable js-off"></div>
+                
+                <div class="view-pane js-off"></div>
+            </div> <!-- msg-panes -->
+        </div> <!-- msg-components -->
+        <!-- debug_toolbar_here -->
+    </div> <!-- msg-container -->
+
+    <!-- Modal -->
+    <div class="modal fade" id="export-modal" tabindex="-1" role="dialog" aria-labelledby="export-modal-title" aria-hidden="true">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="export-modal-title">Archive Export</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            
+            <div class="export-text">
+              
+                <p>You must be logged in to export messages.</p>
+              
+            </div>
+            <div class="export-spinner">
+              <i class="fa fa-spinner fa-spin fa-3x"></i>
+            </div>
+          </div> <!-- modal-body -->
+          <div class="modal-footer">
+              <a class="btn btn-secondary export-link disabled" href="/arch/export/mbox/?email_list=wimse&amp;token=RR5RHtK9jdQyLHLk">Mbox</a>
+              <a class="btn btn-secondary export-link disabled" href="/arch/export/maildir/?email_list=wimse&amp;token=RR5RHtK9jdQyLHLk">Maildir</a>
+              <a class="btn btn-secondary export-link disabled" href="/arch/export/url/?email_list=wimse&amp;token=RR5RHtK9jdQyLHLk">URLs</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    </div>
+    <!-- END Content -->
+
+
+    
+
+</div> <!-- END Container -->
+
+
+
+<script src="https://static.ietf.org/mailarchive/2.36.0/jquery/js/jquery-3.6.0.min.js" crossorigin="anonymous"></script>
+<script src="https://static.ietf.org/mailarchive/2.36.0/bootstrap-5.1.1-dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+<script type="text/javascript" src="https://static.ietf.org/mailarchive/2.36.0/jquery.cookie/jquery.cookie.js"></script>
+<script type="text/javascript" src="https://static.ietf.org/mailarchive/2.36.0/mlarchive/js/base.js"></script>
+
+<script type="text/javascript" src="https://static.ietf.org/mailarchive/2.36.0/jquery-ui/jquery-ui.min.js"></script>
+<script type="text/javascript" src="https://static.ietf.org/mailarchive/2.36.0/jquery.query/jquery.query.js"></script>
+<script type="text/javascript" src="https://static.ietf.org/mailarchive/2.36.0/mlarchive/js/mailarch.js"></script>
+
+
+<!-- debug_toolbar_here -->
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9bcebbd16cb236c2',t:'MTc2ODI0MjcxNi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

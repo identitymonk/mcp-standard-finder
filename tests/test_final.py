@@ -7,6 +7,10 @@ Tests all functionality including working groups
 import asyncio
 import json
 import sys
+
+# Add parent directory to path for imports
+sys.path.insert(0, '.')
+
 from standard_finder import SimpleMCPServer, SimpleRFCService, SimpleInternetDraftService
 
 # Initialize services
